@@ -18,7 +18,21 @@
              :password ""
              :auto-commit true})
 
+(defn inout-sum [tid]
+  (println "# inout-sum. tid : " tid)
+  (j/with-db-connection [tx dbspec]
+    (j/execute! tx
+                (-> (helpers/update :tong)
+                    (sset {:amount (-> (select (sql/call :sum :amount))
+                                       (from :inout)
+                                       (where [:= :tid tid]))})
+                    (where [:= :tid tid])
+                    (sql/format)))))
+
+
+
 (defn bucket-sum [bid]
+  (println "# bucket-sum. bid: " bid)
   (j/with-db-connection [tx dbspec]
     (j/execute! tx
                 (-> (helpers/update :bucket)
@@ -27,23 +41,16 @@
                                        (where [:= :bid bid])
                                        )})
                     (where [:= :bid bid])
-                    (sql/format)))
+                    (sql/format))))
 
-    (let [rows (j/query dbspec (->
-                                (select :bid :tid)
-                                (from :bucket)
-                                (where [:= :bid bid])
-                                sql/format))
-          tid (:tid (first rows))]
-      (println tid)
-      (j/execute! tx
-                  (-> (helpers/update :tong)
-                      (sset {:amount (-> (select (sql/call :sum :amount))
-                                         (from :bucket)
-                                         (where [:= :tid tid]))})
-                      (where [:= :tid tid])
-                      (sql/format)))
-      )))
+;  (let [rows (j/query dbspec (->
+;                              (select :bid :tid)
+;                              (from :bucket)
+;                              (where [:= :bid bid])
+;                              sql/format))
+;        tid (:tid (first rows))]
+;    (inout-sum tid))
+  )
 
 
 
@@ -104,7 +111,8 @@
                              (order-by [:x.tid])
                              (sql/format))
                          )]
-        (t/table rows))
+    (t/table (filter #(not (:is_ok %)) rows)))
+
   (println "### tong, inout sum")
   (let [rows (j/query dbspec
                          (-> (select :x.tid :x.tong_amount :x.inout_sum
@@ -126,7 +134,8 @@
                              (order-by [:x.tid])
                              (sql/format))
                          )]
-        (t/table rows))
+    (t/table (filter #(not (:is_ok %)) rows)))
+
   (println "### bucket, divide sum")
   (let [rows (j/query dbspec
                          (-> (select :x.bid :x.bucket_amount :x.divide_sum
@@ -148,7 +157,8 @@
                              (order-by [:x.bid])
                              (sql/format))
                          )]
-        (t/table rows))
+    (t/table (filter #(not (:is_ok %)) rows)))
+
   (println "### inout, divide sum")
   (let [rows (j/query dbspec
                          (-> (select :x.tid :x.ono :x.inout_amount :x.is_divide :x.divide_sum
@@ -172,8 +182,7 @@
                              (order-by [:x.tid])
                              (sql/format))
                          )]
-        (t/table rows))
-  )
+    (t/table (filter #(not (:is_ok %)) rows))))
 
 
 (defn divide-new [ono]
@@ -187,9 +196,10 @@
       (let [arr []]
         (println "### divide-new")
         (println "ono : " ono)
-        (loop [sum (:amount (first row))]
+        (loop [sum (:amount (first row))
+               cnt 0]
           (println "remain [" sum "]")
-          (when (not= sum 0)
+          (when (or (not= sum 0) (= cnt 0))
             (println "amount / bid / comment")
             (print "===>")
             (let [sep (str/split (read-line) #"/")
@@ -210,7 +220,7 @@
                                 (where [:= :ono ono]) (sql/format)))
                 (bucket-sum bid))
 
-              (recur (- sum amount)))))
+              (recur (- sum amount) (inc cnt)))))
 
         ))))
 
@@ -287,7 +297,9 @@
 
           (j/execute! dbspec (-> (insert-into :inout)
                              (columns :amount :comment :base_date :is_divide :tid)
-                             (values [[amount comment base_date false tid]]) sql/format)))))))
+                             (values [[amount comment base_date false tid]]) sql/format))))))
+  (println "added.")
+  (inout-sum tid))
 
 (defn inout-remove [ono]
   (println "### inout-remove")
@@ -303,7 +315,8 @@
       (j/execute! conn (-> (delete-from :inout)
                            (where [:= :ono ono])
                            (sql/format)))
-      (println "deleted."))))
+      (println "deleted.")
+      (inout-sum))))
 
 
 
