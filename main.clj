@@ -328,12 +328,12 @@
             {:no "b" :menu "buckets"}
             {:no "b [bid]" :menu "bucket divide list"}
             {:no "" :menu ""}
-            {:no "in [tid]" :menu "inout new"}
-            {:no "ir [ono]" :menu "inout remove"}
+            {:no "tn [tid]" :menu "inout new"}
+            {:no "tr [ono]" :menu "inout remove"}
             {:no "" :menu ""}
             {:no "dn [ono]" :menu "divide(inout-bucket) new"}
-            {:no "do [ono]" :menu "divide(inout-bucket) info(ono)"}
-            {:no "dd [dno]" :menu "divide(inout-bucket) info(dno)"}
+            {:no "to [ono]" :menu "divide(inout-bucket) info(ono)"}
+            {:no "do [dno]" :menu "divide(inout-bucket) info(dno)"}
             {:no "dr [ono]" :menu "divide(inout-bucket) remove"}
             {:no "" :menu ""}
             {:no "c" :menu "check"}
@@ -353,11 +353,11 @@
         (and (= "t" cmd) (some? con)) (inout-list con)
         (and (= "b" cmd) (nil? con)) (bucket-list)
         (and (= "b" cmd) (some? con)) (bucket-divide-list con)
-        (and (= "in" cmd) (some? con)) (inout-new con)
-        (and (= "ir" cmd) (some? con)) (inout-remove (edn/read-string con))
+        (and (= "tn" cmd) (some? con)) (inout-new con)
+        (and (= "tr" cmd) (some? con)) (inout-remove (edn/read-string con))
         (and (= "dn" cmd) (some? con)) (divide-new (edn/read-string con))
-        (and (= "do" cmd) (some? con)) (divide-info-ono (edn/read-string con))
-        (and (= "dd" cmd) (some? con)) (divide-info-dno (edn/read-string con))
+        (and (= "to" cmd) (some? con)) (divide-info-ono (edn/read-string con))
+        (and (= "do" cmd) (some? con)) (divide-info-dno (edn/read-string con))
         (and (= "dr" cmd) (some? con)) (divide-remove (edn/read-string con))
         (and (= "c" cmd) (nil? con)) (check)
         :else (top-menu))
