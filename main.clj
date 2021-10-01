@@ -13,10 +13,11 @@
 
 (def dbspec {:dbtype "postgresql"
             :dbname "tbuck"
-            :host "localhost"
-            :user "snailoff"
-             :password ""
-             :auto-commit true})
+            :host "sy.monologue.me"
+            :port "65432"
+            :user "postgres" 
+            :password "red38;" 
+            :auto-commit true})
 
 (defn inout-sum [tid]
   (println "# inout-sum. tid : " tid)

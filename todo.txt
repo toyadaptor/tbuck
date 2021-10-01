@@ -1,0 +1,6 @@
+# web ui로 변경필요.
+
+* divide comment를 입력안하면 inout의 comment 가져옴.
+* 기준일 입력안하면 오늘로.
+* 조회시 기준일 순서로.
+
