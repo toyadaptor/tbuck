@@ -4,8 +4,9 @@
                  [cli4clj "1.7.6"]
                  [honeysql "1.0.444"]
                  [table "0.5.0"]
-                ; [org.postgresql/postgresql "9.1-901-1.jdbc4"]
-
+                 [environ "1.2.0"]
                  [org.postgresql/postgresql "42.2.14"]]
+  :plugins [[lein-environ "1.2.0"]
+            [lein-pprint "1.3.2"]]
   :source-paths ["."]
   :main main)

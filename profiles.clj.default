@@ -1,0 +1,5 @@
+{:dev {:env {:db-host ""
+             :db-name ""
+             :db-user ""
+             :db-password ""
+             :db-port ""}}}
