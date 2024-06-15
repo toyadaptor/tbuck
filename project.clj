@@ -5,8 +5,11 @@
                  [honeysql "1.0.444"]
                  [table "0.5.0"]
                  [environ "1.2.0"]
-                 [org.postgresql/postgresql "42.2.14"]]
+                 [org.postgresql/postgresql "42.2.14"]
+                 [ring/ring-jetty-adapter "1.9.6"]
+                 [metosin/reitit-ring "0.2.6"]
+                 [http-kit "2.6.0"]]
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
-  :source-paths ["."]
-  :main main)
+  :source-paths ["src"]
+  :main tbuck.clj.main)
