@@ -40,6 +40,13 @@
                                         (where [:= :bid bid])
                                         (sql/format)))))
 
+(defn tong-get [tid]
+  (first (j/query dbspec (->
+                           (select :tid :amount :tong_name)
+                           (from :tong)
+                           (where [:= :tid tid])
+                           sql/format))))
+
 (defn tong-list []
   (j/query dbspec (->
                     (select :tid :amount :tong_name)
@@ -47,12 +54,21 @@
                     (order-by [:tid :bid])
                     sql/format)))
 
-(defn bucket-list []
-  (j/query dbspec (->
-                    (select :bid :amount :bucket_name :tid)
-                    (from :bucket)
-                    (order-by [:tid :bid])
-                    sql/format)))
+(defn bucket-list
+  ([] (j/query dbspec (->
+                        (select :bid :amount :bucket_name :tid)
+                        (from :bucket)
+                        (order-by [:tid :bid])
+                        sql/format)))
+  ([tid] (j/query dbspec (->
+                           (select :bid :amount :bucket_name :tid)
+                           (from :bucket)
+                           (where [:= :tid tid])
+                           (order-by [:tid :bid])
+                           sql/format))))
+
+(comment (bucket-list "main"))
+
 
 (defn bucket-divide-list [bid]
   (j/query dbspec
@@ -238,7 +254,14 @@
 
 
 
+(defn inout-get [tid]
+  (first (j/query dbspec
+                  (-> (select :tid)
+                      (from :tong)
+                      (where [:= :tid tid])
+                      (sql/format)))))
 
+(comment (inout-get "main"))
 
 (defn inout-new [tid amount comment base_date]
   (j/execute! dbspec (-> (insert-into :inout)

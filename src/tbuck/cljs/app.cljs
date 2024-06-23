@@ -5,7 +5,7 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-piece s-pieces]]
+            [tbuck.cljs.state :refer [s-main s-pieces]]
             [tbuck.cljs.actions :as action]))
 
 (defonce match (reagent/atom nil))
@@ -15,24 +15,7 @@
           (apply js/console.log params)))
 
 
-(defn inout-list-component []
-      (reagent/create-class
-        {:display-name        "pieces"
-         :component-did-mount (fn []
-                                  (action/get-pieces))
-         :reagent-render      (fn []
-                                  [:div
-                                   #_[:span.icon [:i.fas.fa-clock]]
-                                   [:ul
-                                    (for [piece @s-pieces]
-                                         ^{:key piece}
-                                         [:li [:a {:href (rfe/href ::piece-one {:id (piece :id)})}
-                                               (piece :subject)]
-                                          #_[:a [:span.tag.p-1.ml-2 " tag."]]])]])}))
-
-
-
-(defn bucket-list-component []
+(defn bucket-detail []
       (reagent/create-class
         {:display-name         "piece one"
          :component-did-update (fn [this [_ prev-argv]]
@@ -49,81 +32,126 @@
 
          :reagent-render       (fn []
                                    [:div
-                                    [:strong (@s-piece :subject)]
-                                    [:h5.subtitle.mb-2 (@s-piece :summary)]
-                                    #_[:small.has-text-grey (@s-piece :mtime)]
-                                    #_(when (@s-piece :music)
-                                            [:a {:on-click #(change-music {:path  (str "https://b.monologue.me" (-> @s-piece :music :path))
-                                                                           :title (-> @s-piece :music :title)
-                                                                           :page  (@s-piece :id)
+                                    [:strong (@s-main :subject)]
+                                    [:h5.subtitle.mb-2 (@s-main :summary)]
+                                    #_[:small.has-text-grey (@s-main :mtime)]
+                                    #_(when (@s-main :music)
+                                            [:a {:on-click #(change-music {:path  (str "https://b.monologue.me" (-> @s-main :music :path))
+                                                                           :title (-> @s-main :music :title)
+                                                                           :page  (@s-main :id)
                                                                            :start true})}
 
                                              [:span.icon [:i.fas.fa-external-link-square-alt]]])
                                     [:div.content.mt-5
                                      {:dangerouslySetInnerHTML
-                                      {:__html (@s-piece :content-parsed)}}]])}))
+                                      {:__html (@s-main :content-parsed)}}]])}))
 
 
 
-(defn buckets-component []
+(defn main-component []
       (reagent/create-class
-        {:display-name        "main recent one"
+        {:display-name        "main"
          :component-did-mount (fn []
-                                  (action/get-piece-recent-one))
+                                  (action/get-main))
 
          :reagent-render      (fn []
                                   [:div
-                                   [:strong (@s-piece :subject)]
-                                   [:h5.subtitle.mb-2 (@s-piece :summary)]
-                                   #_[:small.has-text-grey (@s-piece :mtime)]
-                                   [:div.content.mt-5
-                                    {:dangerouslySetInnerHTML
-                                     {:__html (@s-piece :content-parsed)}}]])}))
+                                   [:p.title "Buckets"]
+                                   [:ul.mt-5
+                                    (for [bucket (:buckets @s-main)]
+                                         ^{:key bucket}
+                                         [:li.mt-5
+                                          [:div.columns
+                                           [:div.column
+                                            [:span.is-pulled-left.has-text-weight-bold.is-size-5 [:a (str (:bucket-name bucket))]]
+                                            [:span.is-pulled-right.has-text-weight-bold.is-size-4 (:amount bucket)]]]])]])}))
+
+
+
+
+
+
+
 
 
 (def routes
-  [["/pieces" {:name ::pieces
-               :view inout-list-component}]
-   ["/main" {:name ::main
-             :view buckets-component}]
-   ["/piece/:id" {:name       ::piece-one
-                  :parameters {:path {:id string?}}
-                  :view       bucket-list-component}]])
+  [["/main" {:name ::main
+             :view main-component}]
+   ["/bucket/:bid" {:name       ::bucket-detail
+                    :parameters {:path {:bid string?}}
+                    :view       bucket-detail}]])
 
 
 (defn page-template []
       [:div.container.p-3
+
        [:header
         [:div.columns
          [:div.column.is-one-fifth
           [:header.mb-5
+           #_[:p.title "T-BUCK"]
            [:figure.image
-            [:img {:src "assets/roomel_coffee.jpg"}]]]]
-         [:div.column.has-text-right
-          [:p.title "tbuck"]
-          [:p.span "total xxxx,xxx,xxx"]
-          [:p.span "마지막 입출금 2024-06-22"]]]]
+            [:img {:src "assets/roomel_coffee.jpg"}]]]]]]
+
+       [:div.columns
+        [:div.column
+         [:span.is-pulled-left.title "Account"]
+         [:span.is-pulled-right [:a "입출금 이력"]]]]
+
 
 
        [:div.columns
-        [:div.column.is-one-fifth
-         [inout-list-component]]
         [:div.column
-         [:section.section.mt-0.pt-0
-          [:h5.subtitle.mb-2 "여행"]
-          [:h5.subtitle.mb-2 "주담대"]
-          [:h5.subtitle.mb-2 "비상금"]
-          [:h5.subtitle.mb-2 "여유"]
+         [:div.columns.mt-5
+          [:div.column
+           [:span.is-pulled-left.is-italic (or (:tong-name @s-main) "no account")]
+           [:span.is-pulled-right.has-text-weight-bold.is-size-3 (:tong-amount @s-main)]]]
+
+
+         [:div.columns.mt-5
+          [:div.column
+           [:span.is-pulled-left.is-italic "마지막 입출금 입력"]
+           [:span.is-pulled-right.has-text-weight-bold (:last-inout @s-main)]]]
+
+
+         [:div.columns.mt-5
+          [:div.column
+           [:span.is-pulled-left.is-italic "buckets 합계 일치 여부"]
+           [:span.is-pulled-right.has-text-weight-bold (if (:is-valid-sum @s-main)
+                                                         "정상" "확인 필요")]]]]]
+
+
+
+
+       [:div.columns
+        [:div.column
+         [:section.section.pl-3.pr-3
           (if @match
             (let [view (:view (:data @match))]
                  [view @match])
-            [buckets-component])]]]
+            [main-component])]]]
 
-       ;[:pre (with-out-str (cljs.pprint/pprint @match))]
        [:footer
         [:p [:span.icon-text
              [:span.icon [:i.fas.fa-copyright]]
-             [:span "Mel family"]]]]])
+             [:span "Mel family"]]]]
+
+
+       #_[:div.modal.is-active
+          [:div.modal-background]
+          [:div.modal-card
+           [:header.modal-card-head
+            [:p.modal-card-title "Modal title"]
+            [:button.delete {:aria-label "close"}]]
+           [:section.modal-card-body
+            "asoidjfoasijdof"]
+
+           [:footer.modal-card-foot
+            [:div.buttons
+             [:button.button "닫기"]]]]]])
+
+
+
 
 
 

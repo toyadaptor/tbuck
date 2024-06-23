@@ -1,6 +1,7 @@
 (defproject t-buck "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/java.jdbc "0.7.11"]
+                 [org.clojure/data.json "2.5.0"]
                  [cli4clj "1.7.6"]
                  [honeysql "1.0.444"]
                  [table "0.5.0"]
@@ -8,6 +9,8 @@
                  [org.postgresql/postgresql "42.2.14"]
                  [ring/ring-jetty-adapter "1.9.6"]
                  [metosin/reitit-ring "0.2.6"]
+                 [metosin/reitit "0.5.18"]
+                 [ring-cors "0.1.13"]
                  [http-kit "2.6.0"]]
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
