@@ -33,7 +33,7 @@
 
 
 (defn -main
-  [& args]
+  [& _]
   (println "t-buck!")
   (loop [some ""]
     (let [sep (str/split some #" ") cmd (first sep) con (second sep)]

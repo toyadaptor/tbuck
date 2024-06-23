@@ -16,3 +16,4 @@ pom.xml.asc
 *.iml
 profiles.clj
 .lein-env
+node_modules/
