@@ -8,6 +8,7 @@
 
 (defonce s-main (atom {}))
 (defonce s-pieces (atom []))
+(defonce s-tong-inouts (atom {}))
 
 
 (def custom-formatter (timef/formatter "yyyy-MM-dd'T'hh:mm:ss'Z"))
@@ -30,6 +31,9 @@
                       :last-inout last-inout
                       :buckets (->> buckets
                                     (map #(merge % {:amount (str (add-comma (:amount %)) " 원")})))}))
+
+(defn set-tong-inouts [{:keys [inouts]}]
+      (reset! s-tong-inouts {:inouts inouts}))
 
 (defn set-pieces [res-data]
       (reset! s-pieces

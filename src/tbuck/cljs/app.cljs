@@ -5,7 +5,7 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-pieces]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-pieces]]
             [tbuck.cljs.actions :as action]))
 
 (defonce match (reagent/atom nil))
@@ -15,36 +15,65 @@
           (apply js/console.log params)))
 
 
-(defn bucket-detail []
-      (reagent/create-class
-        {:display-name         "piece one"
-         :component-did-update (fn [this [_ prev-argv]]
-                                   (let [[_ new-argv] (reagent/argv this)
-                                         nid (-> new-argv :parameters :path :id)
-                                         prev-id (-> prev-argv :parameters :path :id)]
-                                        (if (not= nid prev-id)
-                                          (action/get-piece nid))))
+(defn bucket-page [match]
+      (let [{:keys [path]} (:parameters match)]
+           (reagent/create-class
+             {:display-name         "bucket"
+              ;:component-did-update (fn [this [_ prev-argv]]
+              ;                          (let [[_ new-argv] (reagent/argv this)
+              ;                                nid (-> new-argv :parameters :path :id)
+              ;                                prev-id (-> prev-argv :parameters :path :id)]
+              ;                               (if (not= nid prev-id)
+              ;                                 (action/get-piece nid))))
+              ;
+              ;:component-did-mount  (fn [this]
+              ;                          (let [[_ new-argv] (reagent/argv this)
+              ;                                nid (-> new-argv :parameters :path :id)]
+              ;                               (action/get-piece nid)))
+              :reagent-render       (fn []
+                                        [:div
+                                         (:bid path)])})))
 
-         :component-did-mount  (fn [this]
-                                   (let [[_ new-argv] (reagent/argv this)
-                                         nid (-> new-argv :parameters :path :id)]
-                                        (action/get-piece nid)))
 
-         :reagent-render       (fn []
-                                   [:div
-                                    [:strong (@s-main :subject)]
-                                    [:h5.subtitle.mb-2 (@s-main :summary)]
-                                    #_[:small.has-text-grey (@s-main :mtime)]
-                                    #_(when (@s-main :music)
-                                            [:a {:on-click #(change-music {:path  (str "https://b.monologue.me" (-> @s-main :music :path))
-                                                                           :title (-> @s-main :music :title)
-                                                                           :page  (@s-main :id)
-                                                                           :start true})}
 
-                                             [:span.icon [:i.fas.fa-external-link-square-alt]]])
-                                    [:div.content.mt-5
-                                     {:dangerouslySetInnerHTML
-                                      {:__html (@s-main :content-parsed)}}]])}))
+(defn tong-page [match]
+      (let [{:keys [path]} (:parameters match)]
+           (reagent/create-class
+             {:display-name         "tong"
+              ;:component-did-update (fn [this [_ prev-argv]]
+              ;                          (let [[_ new-argv] (reagent/argv this)
+              ;                                nid (-> new-argv :parameters :path :id)
+              ;                                prev-id (-> prev-argv :parameters :path :id)]
+              ;                               (if (not= nid prev-id)
+              ;                                 (action/get-piece nid))))
+              ;
+              :component-did-mount  (fn [this]
+                                        (action/get-tong-inouts (:tid path)))
+
+              :reagent-render       (fn []
+                                        [:div
+                                         [:div.columns
+                                          [:div.column.table-container
+                                           [:p.is-pulled-left.title "입출금 이력"]
+                                           [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
+                                         [:div.columns
+                                          [:div.column
+                                           [:table.table.is-fullwidth.is-striped
+                                            [:thead
+                                             [:th "ono"]
+                                             [:th "date"]
+                                             [:th "amount"]
+                                             [:th "comment"]]
+                                            [:tbody
+                                             (for [inout (:inouts @s-tong-inouts)]
+                                                  ^{:key inout}
+                                                  [:tr
+                                                   [:td (:ono inout)]
+                                                   [:td (:create-date inout)]
+                                                   [:td (:amount inout)]
+                                                   [:td (:comment inout)]])]]]]])})))
+
+
 
 
 
@@ -63,13 +92,10 @@
                                          [:li.mt-5
                                           [:div.columns
                                            [:div.column
-                                            [:span.is-pulled-left.has-text-weight-bold.is-size-5 [:a (str (:bucket-name bucket))]]
+                                            [:span.is-pulled-left.has-text-weight-bold.is-size-5 [:a {:href (rfe/href ::bucket {:bid (:bid bucket)})}
+                                                                                                  (:bucket-name bucket)]]
+
                                             [:span.is-pulled-right.has-text-weight-bold.is-size-4 (:amount bucket)]]]])]])}))
-
-
-
-
-
 
 
 
@@ -77,9 +103,12 @@
 (def routes
   [["/main" {:name ::main
              :view main-component}]
-   ["/bucket/:bid" {:name       ::bucket-detail
+   ["/tong/:tid" {:name       ::tong
+                  :parameters {:path {:tid string?}}
+                  :view       tong-page}]
+   ["/bucket/:bid" {:name       ::bucket
                     :parameters {:path {:bid string?}}
-                    :view       bucket-detail}]])
+                    :view       bucket-page}]])
 
 
 (defn page-template []
@@ -96,9 +125,9 @@
        [:div.columns
         [:div.column
          [:span.is-pulled-left.title "Account"]
-         [:span.is-pulled-right [:a "입출금 이력"]]]]
-
-
+         [:span.is-pulled-right
+          [:a {:href (rfe/href ::tong {:tid "main"})}
+           "입출금 이력"]]]]
 
        [:div.columns
         [:div.column
@@ -114,14 +143,11 @@
            [:span.is-pulled-right.has-text-weight-bold (:last-inout @s-main)]]]
 
 
-         [:div.columns.mt-5
-          [:div.column
-           [:span.is-pulled-left.is-italic "buckets 합계 일치 여부"]
-           [:span.is-pulled-right.has-text-weight-bold (if (:is-valid-sum @s-main)
-                                                         "정상" "확인 필요")]]]]]
-
-
-
+         #_[:div.columns.mt-5
+            [:div.column
+             [:span.is-pulled-left.is-italic "buckets 합계 일치 여부"]
+             [:span.is-pulled-right.has-text-weight-bold (if (:is-valid-sum @s-main)
+                                                           "정상" "확인 필요")]]]]]
 
        [:div.columns
         [:div.column
@@ -135,7 +161,6 @@
         [:p [:span.icon-text
              [:span.icon [:i.fas.fa-copyright]]
              [:span "Mel family"]]]]
-
 
        #_[:div.modal.is-active
           [:div.modal-background]
@@ -169,3 +194,8 @@
 (defn ^:export main
       []
       (start))
+
+
+
+
+

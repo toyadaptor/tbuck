@@ -12,13 +12,17 @@
                (state/set-main (-> response :body)))))
 
 
+(defn get-tong-inouts [tid]
+      (go (let [response (<! (http/get (str backend "/api/tong/" tid "/inouts")
+                                       {:with-credentials? false}))]
+               (state/set-tong-inouts (-> response :body)))))
+
+
 (defn get-pieces []
       (go (let [response (<! (http/get (str backend "/api/piece-recent-list")
                                        {:with-credentials? false}))]
 
                (state/set-pieces (-> response :body :pieces)))))
-
-
 
 
 

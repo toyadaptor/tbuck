@@ -23,6 +23,12 @@
 (defn tong-inouts [tid]
   (println "tong-inouts: " tid)
   {:inouts [{:ono    77
+             :create-date "2024-07-01"
+             :comment "급여 24-7"
+             :amount 88888}
+            {:ono    77
+             :create-date "2024-07-01"
+             :comment "급여 24-7"
              :amount 88888}]})
 
 
