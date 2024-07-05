@@ -5,7 +5,7 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-tong-inouts s-pieces]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-pieces s-bucket-divides]]
             [tbuck.cljs.actions :as action]))
 
 (defonce match (reagent/atom nil))
@@ -18,28 +18,43 @@
 (defn bucket-page [match]
       (let [{:keys [path]} (:parameters match)]
            (reagent/create-class
-             {:display-name         "bucket"
-              ;:component-did-update (fn [this [_ prev-argv]]
-              ;                          (let [[_ new-argv] (reagent/argv this)
-              ;                                nid (-> new-argv :parameters :path :id)
-              ;                                prev-id (-> prev-argv :parameters :path :id)]
-              ;                               (if (not= nid prev-id)
-              ;                                 (action/get-piece nid))))
-              ;
-              ;:component-did-mount  (fn [this]
-              ;                          (let [[_ new-argv] (reagent/argv this)
-              ;                                nid (-> new-argv :parameters :path :id)]
-              ;                               (action/get-piece nid)))
+             {:display-name         "Bucket >"
+              :component-did-mount  (fn [this]
+
+                                        (action/get-bucket-divides (:bid path)))
               :reagent-render       (fn []
                                         [:div
-                                         (:bid path)])})))
+                                         [:div.columns
+                                          [:div.column
+                                           [:p.is-pulled-left.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]
+                                           [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
+
+                                         [:div.columns
+                                          [:div.column
+                                           [:table.table.is-fullwidth.is-striped
+                                            [:thead
+                                             [:th "amount"]
+                                             [:th "comment"]
+                                             [:th]]
+                                            [:tbody
+                                             (for [div (:divides @s-bucket-divides)]
+                                                  ^{:key div}
+                                                  [:tr
+                                                   [:td (:amount div)]
+                                                   [:td (:base-date div)
+                                                    [:br]
+                                                    (:comment div)]
+                                                   [:td [:button.button
+                                                         {:on-click #(action/get-bucket-divides-detail (:dno div))}
+                                                         "detail"]]])]]]]])})))
+
 
 
 
 (defn tong-page [match]
       (let [{:keys [path]} (:parameters match)]
            (reagent/create-class
-             {:display-name         "tong"
+             {:display-name        "tong"
               ;:component-did-update (fn [this [_ prev-argv]]
               ;                          (let [[_ new-argv] (reagent/argv this)
               ;                                nid (-> new-argv :parameters :path :id)
@@ -47,31 +62,33 @@
               ;                               (if (not= nid prev-id)
               ;                                 (action/get-piece nid))))
               ;
-              :component-did-mount  (fn [this]
-                                        (action/get-tong-inouts (:tid path)))
+              :component-did-mount (fn [this]
+                                       (action/get-tong-inouts (:tid path)))
 
-              :reagent-render       (fn []
-                                        [:div
-                                         [:div.columns
-                                          [:div.column.table-container
-                                           [:p.is-pulled-left.title "입출금 이력"]
-                                           [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
-                                         [:div.columns
-                                          [:div.column
-                                           [:table.table.is-fullwidth.is-striped
-                                            [:thead
-                                             [:th "ono"]
-                                             [:th "date"]
-                                             [:th "amount"]
-                                             [:th "comment"]]
-                                            [:tbody
+              :reagent-render      (fn []
+                                       [:div
+                                        [:div.columns
+                                         [:div.column.table-container
+                                          [:p.is-pulled-left.title "입출금 이력"]
+                                          [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
+                                        [:div.columns
+                                         [:div.column
+                                          [:table.table.is-fullwidth.is-striped
+                                           [:thead
+                                            [:th "amount"]
+                                            [:th "comment"]
+                                            [:th]]
+                                           [:tbody
                                              (for [inout (:inouts @s-tong-inouts)]
                                                   ^{:key inout}
                                                   [:tr
-                                                   [:td (:ono inout)]
-                                                   [:td (:create-date inout)]
                                                    [:td (:amount inout)]
-                                                   [:td (:comment inout)]])]]]]])})))
+                                                   [:td (:base-date inout)
+                                                    [:br]
+                                                    (:comment inout)]
+                                                   [:td [:button.button
+                                                         {:on-click #(action/get-tong-inouts-detail (:ono inout))}
+                                                         "detail"]]])]]]]])})))
 
 
 
@@ -162,7 +179,19 @@
              [:span.icon [:i.fas.fa-copyright]]
              [:span "Mel family"]]]]
 
-       #_[:div.modal.is-active
+       [:div.modal {:id "ono-modal"}
+        [:div.modal-background]
+        [:div.modal-card
+         [:header.modal-card-head
+          [:p.modal-card-title ""]
+          [:button.delete {:aria-label "close"}]]
+         [:section.modal-card-body
+          "asoidjfoasijdof"]
+
+         [:footer.modal-card-foot
+          [:div.buttons
+           [:button.button "닫기"]]]]]
+       #_[:div.modal.is-active {:id "dno-modal"}
           [:div.modal-background]
           [:div.modal-card
            [:header.modal-card-head

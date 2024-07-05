@@ -9,6 +9,12 @@
 (defonce s-main (atom {}))
 (defonce s-pieces (atom []))
 (defonce s-tong-inouts (atom {}))
+(defonce s-bucket-divides (atom {}))
+
+(defonce s-inouts-detail (atom {}))
+
+(defonce s-divides-detail (atom {}))
+
 
 
 (def custom-formatter (timef/formatter "yyyy-MM-dd'T'hh:mm:ss'Z"))
@@ -35,8 +41,14 @@
 (defn set-tong-inouts [{:keys [inouts]}]
       (reset! s-tong-inouts {:inouts inouts}))
 
-(defn set-pieces [res-data]
-      (reset! s-pieces
-              (map #(assoc % :subject (-> (% :subject) o2o)) res-data)))
+(defn set-bucket-divides [{:keys [bucket divides]}]
+      (reset! s-bucket-divides {:bucket bucket
+                                :divides divides}))
+
+(defn set-inouts-detail [res]
+      (reset! s-inouts-detail res))
+(defn set-divides-detail [res]
+      (reset! s-divides-detail res))
+
 
 

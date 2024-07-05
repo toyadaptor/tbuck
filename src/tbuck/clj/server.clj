@@ -20,17 +20,30 @@
                         :handler    (fn [{:keys []}]
                                       {:status 200
                                        :body   (api/main)})}}]
-        ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
-                                       :responses  {200 {}}
-                                       :handler    (fn [{{{:keys [bid]} :path} :parameters}]
-                                                     {:status 200
-                                                      :body   (api/bucket-divides bid)})}}]
         ["/tong/:tid/inouts" {:get {:parameters {:path {:tid string?}}
                                     :responses  {200 {:piece {}}}
                                     :handler    (fn [{{{:keys [tid]} :path} :parameters}]
                                                   (clojure.pprint/pprint tid)
                                                   {:status 200
-                                                   :body   (api/tong-inouts tid)})}}]]]
+                                                   :body   (api/tong-inouts tid)})}}]
+        ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
+                                       :responses  {200 {}}
+                                       :handler    (fn [{{{:keys [bid]} :path} :parameters}]
+                                                     {:status 200
+                                                      :body   (api/bucket-divides bid)})}}]
+
+        ["/inouts/:ono" {:get {:parameters {:path {:ono int?}}
+                               :responses  {200 {:piece {}}}
+                               :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                             (clojure.pprint/pprint ono)
+                                             {:status 200
+                                              :body   (api/tong-inouts-detail ono)})}}]
+        ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
+                                :responses  {200 {}}
+                                :handler    (fn [{{{:keys [dno]} :path} :parameters}]
+                                              {:status 200
+                                               :body   (api/bucket-divides-detail dno)})}}]]]
+
 
       {:data {:coercion   reitit.coercion.spec/coercion
               :muuntaja   muun/instance

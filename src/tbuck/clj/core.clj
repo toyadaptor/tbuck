@@ -54,6 +54,13 @@
                     (order-by [:tid :bid])
                     sql/format)))
 
+(defn bucket-get [bid]
+  (first (j/query dbspec (->
+                           (select :bid :amount :bucket_name :tid)
+                           (from :bucket)
+                           (where [:= :bid bid])
+                           sql/format))))
+
 (defn bucket-list
   ([] (j/query dbspec (->
                         (select :bid :amount :bucket_name :tid)
@@ -73,7 +80,7 @@
 (defn bucket-divide-list [bid]
   (j/query dbspec
            (->
-             (select :dno :comment :amount :create_date)
+             (select :dno :comment :amount :create_date :base_date :ono)
              (from :divide)
              (where [:= :bid bid])
              (order-by [:dno])
@@ -173,41 +180,40 @@
 
 
 (defn divide-new [ono]
-  (let [row (j/query dbspec
-                     (-> (select :ono :amount)
-                         (from :inout)
-                         (where [:and [:= :ono ono] [:= :is_divide false]])
-                         (sql/format)))]
-    (if (not (empty? row))
-      ;(println (edn/read-string (:amount (first row))))
-      (let [arr []]
-        (println "### divide-new")
-        (println "ono : " ono)
-        (loop [sum (:amount (first row))
-               cnt 0]
-          (println "remain [" sum "]")
-          (when (or (not= sum 0) (= cnt 0))
-            (println "amount / bid / comment")
-            (print "===>")
-            (let [sep (str/split (read-line) #"/")
-                  amount (edn/read-string (nth sep 0))
-                  bid (nth sep 1)
-                  comment (nth sep 2)]
-              (println "input : " amount bid comment)
-              (conj arr [amount bid comment])
+  (if-let [row (first (j/query dbspec
+                               (-> (select :*)
+                                   (from :inout)
+                                   (where [:and [:= :ono ono] [:= :is_divide false]])
+                                   (sql/format))))]
+    (let [arr []]
+      (println "### divide-new")
+      (println "ono : " ono)
+      (println row)
+      (loop [sum (:amount row)
+             cnt 0]
+        (println "remain [" sum "]")
+        (when (or (not= sum 0) (= cnt 0))
+          (println "amount / bid / comment")
+          (print "===>")
+          (let [sep (str/split (read-line) #"/")
+                amount (edn/read-string (nth sep 0))
+                bid (nth sep 1)
+                comment (nth sep 2)]
+            (println "input : " amount bid comment)
+            (conj arr [amount bid comment])
 
-              (j/with-db-connection [tx dbspec]
-                                    (j/execute! tx
-                                                (-> (insert-into :divide)
-                                                    (columns :ono :amount :bid :comment :etc)
-                                                    (values [[ono amount bid comment "etc"]]) sql/format))
-                                    (j/execute! tx
-                                                (-> (helpers/update :inout)
-                                                    (sset {:is_divide true})
-                                                    (where [:= :ono ono]) (sql/format)))
-                                    (bucket-sum bid))
+            (j/with-db-connection [tx dbspec]
+                                  (j/execute! tx
+                                              (-> (insert-into :divide)
+                                                  (columns :ono :amount :bid :comment :etc :base_date)
+                                                  (values [[ono amount bid comment "etc" (:base_date row)]]) sql/format))
+                                  (j/execute! tx
+                                              (-> (helpers/update :inout)
+                                                  (sset {:is_divide true})
+                                                  (where [:= :ono ono]) (sql/format)))
+                                  (bucket-sum bid))
 
-              (recur (- sum amount) (inc cnt)))))))))
+            (recur (- sum amount) (inc cnt))))))))
 
 
 (defn divide-info-ono-after [ono]
@@ -221,24 +227,29 @@
 
 
 (defn divide-info-ono [ono]
-  (j/query dbspec
-           (-> (select :base_date :amount :is_divide :comment)
-               (from :inout)
-               (where [:= :ono ono])
-               sql/format)))
+  (first (j/query dbspec
+                  (-> (select :*)
+                      (from :inout)
+                      (where [:= :ono ono])
+                      sql/format))))
 
 
 
-
+#_(defn divide-info-dno [dno]
+    (let [row (first (j/query dbspec
+                              (-> (select :dno :ono :bid :amount :create_date :comment)
+                                  (from :divide)
+                                  (where [:= :dno dno])
+                                  sql/format)))]
+      {:divide-info row
+       :inout-info  (divide-info-ono (:ono row))}))
 
 (defn divide-info-dno [dno]
-  (let [row (j/query dbspec
-                     (-> (select :dno :ono :bid :amount :create_date :comment)
-                         (from :divide)
-                         (where [:= :dno dno])
-                         sql/format))]
-    {:divide-info row
-     :inout-info  (divide-info-ono (:ono (first row)))}))
+  (first (j/query dbspec
+                  (-> (select :dno :ono :bid :amount :create_date :comment)
+                      (from :divide)
+                      (where [:= :dno dno])
+                      sql/format))))
 
 
 

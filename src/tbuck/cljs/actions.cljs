@@ -17,19 +17,28 @@
                                        {:with-credentials? false}))]
                (state/set-tong-inouts (-> response :body)))))
 
+(defn get-bucket-divides [bid]
+      (go (let [response (<! (http/get (str backend "/api/bucket/" bid "/divides")
+                                       {:with-credentials? false}))]
+               (state/set-bucket-divides (-> response :body)))))
 
-(defn get-pieces []
-      (go (let [response (<! (http/get (str backend "/api/piece-recent-list")
+(defn get-tong-inouts-detail [ono]
+      (go (let [response (<! (http/get (str backend "/api/inouts/" ono)
                                        {:with-credentials? false}))]
 
-               (state/set-pieces (-> response :body :pieces)))))
+               (state/set-inouts-detail (-> response :body)))))
 
-
-
-(defn get-piece [piece-id]
-      (go (let [response (<! (http/get (str backend "/api/piece/" piece-id)
+(defn get-bucket-divides-detail [dno]
+      (go (let [response (<! (http/get (str backend "/api/divides/" dno)
                                        {:with-credentials? false}))]
-               (state/set-main (-> response :body :piece)))))
+
+               (state/set-divides-detail (-> response :body)))))
+
+
+
+
+
+
 
 
 

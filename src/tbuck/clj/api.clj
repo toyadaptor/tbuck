@@ -12,24 +12,40 @@
      :last-inout   "2024.06.23. 12:34"
      :buckets      buckets}))
 
-(defn bucket-divides [bid]
-  (println "bucket-divides : " bid)
-  {:divides [{:dno     123
-              :ono     456
-              :bid     "travel"
-              :amount  123
-              :comment "정기적."}]})
-
 (defn tong-inouts [tid]
   (println "tong-inouts: " tid)
-  {:inouts [{:ono    77
-             :create-date "2024-07-01"
-             :comment "급여 24-7"
-             :amount 88888}
-            {:ono    77
-             :create-date "2024-07-01"
-             :comment "급여 24-7"
-             :amount 88888}]})
+  (let [inouts (->> (inout-list tid)
+                    (map #(clojure.set/rename-keys % {:base_date :base-date})))]
+    {:inouts inouts}))
+
+
+(defn bucket-divides [bid]
+  (println "bucket-divides : " bid)
+  (let [bucket (clojure.set/rename-keys (bucket-get bid) {:bucket_name :bucket-name})
+        divides (->> (bucket-divide-list bid)
+                     (map #(clojure.set/rename-keys % {:base_date :base-date})))]
+    (println divides)
+    {:bucket bucket
+     :divides divides}))
+
+
+(defn tong-inouts-detail [ono]
+  {:inout (divide-info-ono ono)
+   :divides (divide-info-ono-after ono)})
+
+(defn bucket-divides-detail [dno]
+  (let [divide (divide-info-dno dno)]
+    (tong-inouts-detail (:ono divide))))
+
+
+
+
+
+
+
+
+
+
 
 
 
