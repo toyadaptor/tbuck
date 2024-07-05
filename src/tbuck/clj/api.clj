@@ -30,8 +30,9 @@
 
 
 (defn tong-inouts-detail [ono]
-  {:inout (divide-info-ono ono)
-   :divides (divide-info-ono-after ono)})
+  {:inout (clojure.set/rename-keys (divide-info-ono ono) {:base_date :base-date})
+   :divides (->> (divide-info-ono-after ono)
+                 (map #(clojure.set/rename-keys % {:bucket_name :bucket-name})))})
 
 (defn bucket-divides-detail [dno]
   (let [divide (divide-info-dno dno)]

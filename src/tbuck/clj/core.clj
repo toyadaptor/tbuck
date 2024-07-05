@@ -217,13 +217,12 @@
 
 
 (defn divide-info-ono-after [ono]
-
   (j/query dbspec
-           (-> (select :dno :bid :amount :create_date :comment)
-               (from :divide)
-               (where [:= :ono ono])
-               (order-by [:bid])
-               sql/format)))
+           (sql/format
+             {:select [:d.* :b.bucket_name]
+              :from   [[:divide :d]]
+              :left-join [[:bucket :b] [:= :b.bid :d.bid]]
+              :where [:= :d.ono ono]})))
 
 
 (defn divide-info-ono [ono]

@@ -7,13 +7,12 @@
 
 
 (defonce s-main (atom {}))
-(defonce s-pieces (atom []))
 (defonce s-tong-inouts (atom {}))
 (defonce s-bucket-divides (atom {}))
 
-(defonce s-inouts-detail (atom {}))
+(defonce s-inout-divides (atom {}))
 
-(defonce s-divides-detail (atom {}))
+
 
 
 
@@ -46,9 +45,9 @@
                                 :divides divides}))
 
 (defn set-inouts-detail [res]
-      (reset! s-inouts-detail res))
+      (reset! s-inout-divides res))
 (defn set-divides-detail [res]
-      (reset! s-divides-detail res))
+      (reset! s-inout-divides res))
 
 
 

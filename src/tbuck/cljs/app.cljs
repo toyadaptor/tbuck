@@ -5,10 +5,12 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-tong-inouts s-pieces s-bucket-divides]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides]]
             [tbuck.cljs.actions :as action]))
 
 (defonce match (reagent/atom nil))
+
+(defonce is-inout-divides-modal (reagent/atom false))
 
 (defn log-fn [& params]
       (fn [_]
@@ -26,8 +28,11 @@
                                         [:div
                                          [:div.columns
                                           [:div.column
-                                           [:p.is-pulled-left.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]
-                                           [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
+                                           [:p.is-pulled.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
+
+                                         [:div.columns
+                                          [:div.column
+                                           [:p.title.is-3 (str (:amount (:bucket @s-bucket-divides)) " 원")]]]
 
                                          [:div.columns
                                           [:div.column
@@ -45,7 +50,9 @@
                                                     [:br]
                                                     (:comment div)]
                                                    [:td [:button.button
-                                                         {:on-click #(action/get-bucket-divides-detail (:dno div))}
+                                                         {:on-click #(do (action/get-bucket-divides-detail (:dno div))
+                                                                         (reset! is-inout-divides-modal true))}
+
                                                          "detail"]]])]]]]])})))
 
 
@@ -69,8 +76,8 @@
                                        [:div
                                         [:div.columns
                                          [:div.column.table-container
-                                          [:p.is-pulled-left.title "입출금 이력"]
-                                          [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]
+                                          [:p.is-pulled-left.title "입출금 이력"]]]
+
                                         [:div.columns
                                          [:div.column
                                           [:table.table.is-fullwidth.is-striped
@@ -87,7 +94,8 @@
                                                     [:br]
                                                     (:comment inout)]
                                                    [:td [:button.button
-                                                         {:on-click #(action/get-tong-inouts-detail (:ono inout))}
+                                                         {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
+                                                                         (reset! is-inout-divides-modal true))}
                                                          "detail"]]])]]]]])})))
 
 
@@ -143,8 +151,8 @@
         [:div.column
          [:span.is-pulled-left.title "Account"]
          [:span.is-pulled-right
-          [:a {:href (rfe/href ::tong {:tid "main"})}
-           "입출금 이력"]]]]
+          [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]]
+
 
        [:div.columns
         [:div.column
@@ -153,12 +161,12 @@
            [:span.is-pulled-left.is-italic (or (:tong-name @s-main) "no account")]
            [:span.is-pulled-right.has-text-weight-bold.is-size-3 (:tong-amount @s-main)]]]
 
-
          [:div.columns.mt-5
           [:div.column
-           [:span.is-pulled-left.is-italic "마지막 입출금 입력"]
-           [:span.is-pulled-right.has-text-weight-bold (:last-inout @s-main)]]]
-
+           [:span.is-pulled-left.is-italic
+            [:a {:href (rfe/href ::tong {:tid "main"})}
+               "입출 이력"]]
+           [:span.is-pulled-right.has-text-weight-bold (str "마지막 " (:last-inout @s-main))]]]
 
          #_[:div.columns.mt-5
             [:div.column
@@ -179,30 +187,51 @@
              [:span.icon [:i.fas.fa-copyright]]
              [:span "Mel family"]]]]
 
-       [:div.modal {:id "ono-modal"}
+       [:div.modal {:id "ono-modal" :class (if @is-inout-divides-modal "is-active" "")}
         [:div.modal-background]
         [:div.modal-card
          [:header.modal-card-head
-          [:p.modal-card-title ""]
-          [:button.delete {:aria-label "close"}]]
+          [:p.modal-card-title "입출금 분배"]
+          [:button.delete {:aria-label "close"
+                           :on-click #(reset! is-inout-divides-modal false)}]]
          [:section.modal-card-body
-          "asoidjfoasijdof"]
+          [:div.columns
+           [:div.column
+            [:p.title.is-4 "입출금"]
+            [:table.table.is-fullwidth.is-striped
+             [:thead
+              [:th "amount"]
+              [:th "comment"]
+              [:th "date"]]
+             [:tbody
+              (let [inout (:inout @s-inout-divides)]
+                   [:tr
+                    [:td (:amount inout)]
+                    [:td (-> @s-inout-divides :inout :comment)]
+                    [:td (-> @s-inout-divides :inout :base-date)]])]]]]
+
+          [:div.columns.mt-5
+           [:div.column
+            [:p.title.is-4 "버켓"]
+            [:table.table.is-fullwidth.is-striped
+             [:thead
+              [:th "버켓"]
+              [:th "amount"]
+              [:th "comment"]]
+
+             [:tbody
+              (for [div (:divides @s-inout-divides)]
+                   ^{:key div}
+                   [:tr
+                    [:td (:bucket-name div)]
+                    [:td (:amount div)]
+                    [:td (:comment div)]])]]]]]
 
          [:footer.modal-card-foot
           [:div.buttons
-           [:button.button "닫기"]]]]]
-       #_[:div.modal.is-active {:id "dno-modal"}
-          [:div.modal-background]
-          [:div.modal-card
-           [:header.modal-card-head
-            [:p.modal-card-title "Modal title"]
-            [:button.delete {:aria-label "close"}]]
-           [:section.modal-card-body
-            "asoidjfoasijdof"]
+           [:button.button.is-fullwidth
+            {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]])
 
-           [:footer.modal-card-foot
-            [:div.buttons
-             [:button.button "닫기"]]]]]])
 
 
 

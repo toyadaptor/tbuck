@@ -1,6 +1,6 @@
 (ns tbuck.cljs.actions
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [tbuck.cljs.state :as state :refer [s-main s-pieces]]
+  (:require [tbuck.cljs.state :as state]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]))
 
