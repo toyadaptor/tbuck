@@ -53,11 +53,19 @@
                                                    [:td (:base-date div)
                                                     [:br]
                                                     (:comment div)]
-                                                   [:td [:button.button
-                                                         {:on-click #(do (action/get-bucket-divides-detail (:dno div))
-                                                                         (reset! is-inout-divides-modal true))}
+                                                   [:td
 
-                                                         "detail"]]])]]]]])})))
+
+                                                    [:a.button
+                                                     {:on-click #(do (action/get-bucket-divides-detail (:dno div))
+                                                                     (reset! is-inout-divides-modal true))}
+                                                     [:span.icon-text
+                                                      [:span.icon [:i.fas.fa-layer-group]]]]]])]]]]])})))
+
+
+
+
+
 
 
 
@@ -97,10 +105,25 @@
                                                    [:td (:base-date inout)
                                                     [:br]
                                                     (:comment inout)]
-                                                   [:td [:button.button
-                                                         {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
-                                                                         (reset! is-inout-divides-modal true))}
-                                                         "detail"]]])]]]]])})))
+                                                   [:td
+                                                    [:div.field.is-grouped
+                                                     [:div.control
+                                                      [:a.button.is-small
+                                                       {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
+                                                                       (reset! is-inout-divides-modal true))}
+                                                       [:span.icon-text
+                                                        [:span.icon [:i.fas.fa-layer-group]]]]]
+                                                     [:div.control
+                                                      [:a.button.is-small
+                                                       {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
+                                                                       (reset! is-inout-divides-modal true))}
+                                                       [:span.icon-text
+                                                        [:span.icon [:i.fas.fa-divide]]]]]]]])]]]]])})))
+
+
+
+
+
 
 
 

@@ -39,7 +39,9 @@
 
 (defn set-tong-inouts [{:keys [inouts]}]
       (reset! s-tong-inouts {:inouts (->> inouts
-                                          (map #(merge % {:amount (str (add-comma (:amount %)) " 원")})))}))
+                                          (map #(merge % {:amount (if (= 0 (:amount %))
+                                                                    "#조정#"
+                                                                    (str (add-comma (:amount %)) " 원"))})))}))
 
 (defn set-bucket-divides [{:keys [bucket divides]}]
       (reset! s-bucket-divides {:bucket (merge bucket {:amount (str (add-comma (:amount bucket)) " 원")})
@@ -48,7 +50,9 @@
 
 
 (defn set-inouts-detail [{:keys [inout divides]}]
-      (reset! s-inout-divides {:inout (merge inout {:amount (str (add-comma (:amount inout)) " 원")})
+      (reset! s-inout-divides {:inout (merge inout {:amount (if (= 0 (:amount inout))
+                                                              "#조정#"
+                                                              (str (add-comma (:amount inout)) " 원"))})
                                :divides (->> divides
                                              (map #(merge % {:amount (str (add-comma (:amount %)) " 원")})))}))
 (defn set-divides-detail [res]
