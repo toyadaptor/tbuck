@@ -56,7 +56,7 @@
 
 (defn bucket-get [bid]
   (first (j/query dbspec (->
-                           (select :bid :amount :bucket_name :tid)
+                           (select :bid :amount :bucket_name :tid :comment)
                            (from :bucket)
                            (where [:= :bid bid])
                            sql/format))))
@@ -65,13 +65,13 @@
   ([] (j/query dbspec (->
                         (select :bid :amount :bucket_name :tid)
                         (from :bucket)
-                        (order-by [:tid :bid])
+                        (order-by [:tid :bucket_name])
                         sql/format)))
   ([tid] (j/query dbspec (->
                            (select :bid :amount :bucket_name :tid)
                            (from :bucket)
                            (where [:= :tid tid])
-                           (order-by [:tid :bid])
+                           (order-by [:bid])
                            sql/format))))
 
 (comment (bucket-list "main"))
@@ -83,7 +83,7 @@
              (select :dno :comment :amount :create_date :base_date :ono)
              (from :divide)
              (where [:= :bid bid])
-             (order-by [:dno])
+             (order-by [[:dno :desc]])
              sql/format)))
 
 
@@ -92,7 +92,7 @@
            (-> (select :ono :base_date :amount :is_divide :comment)
                (from :inout)
                (where [:= :tid tid])
-               (order-by [:ono])
+               (order-by [[:ono :desc]])
                sql/format)))
 
 
@@ -206,7 +206,7 @@
                                   (j/execute! tx
                                               (-> (insert-into :divide)
                                                   (columns :ono :amount :bid :comment :etc :base_date)
-                                                  (values [[ono amount bid comment "etc" (:base_date row)]]) sql/format))
+                                                  (values [[ono amount bid (:comment row) "etc" (:base_date row)]]) sql/format))
                                   (j/execute! tx
                                               (-> (helpers/update :inout)
                                                   (sset {:is_divide true})
@@ -299,3 +299,7 @@
     (println "no ono")))
 
 
+
+(comment
+  (bucket-sum "buffer")
+  (inout-sum "main"))

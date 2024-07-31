@@ -1,38 +1,45 @@
 (ns tbuck.clj.api
   (:require [tbuck.clj.core :refer :all]))
 
+(defn convert-keys [m]
+  (clojure.set/rename-keys m {:bucket_name :bucket-name
+                              :base_date :base-date}))
+
+
 (defn main []
   (let [tid "main"
-        tong (tong-get "main")
+        tong (tong-get tid)
         buckets (->> (bucket-list tid)
-                     (map #(clojure.set/rename-keys % {:bucket_name :bucket-name})))]
+                     (map #(convert-keys %)))
+        inout (first (inout-list tid))]
     {:tong-name    (:tong_name tong)
      :tong-amount  (:amount tong)
      :is-valid-sum true
-     :last-inout   "2024.06.23. 12:34"
+     :last-inout   (if (empty? inout) "no inout" (:base_date inout))
      :buckets      buckets}))
+
 
 (defn tong-inouts [tid]
   (println "tong-inouts: " tid)
   (let [inouts (->> (inout-list tid)
-                    (map #(clojure.set/rename-keys % {:base_date :base-date})))]
+                    (map #(convert-keys %)))]
     {:inouts inouts}))
 
 
 (defn bucket-divides [bid]
   (println "bucket-divides : " bid)
-  (let [bucket (clojure.set/rename-keys (bucket-get bid) {:bucket_name :bucket-name})
+  (let [bucket (convert-keys (bucket-get bid))
         divides (->> (bucket-divide-list bid)
-                     (map #(clojure.set/rename-keys % {:base_date :base-date})))]
+                     (map #(convert-keys %)))]
     (println divides)
     {:bucket bucket
      :divides divides}))
 
 
 (defn tong-inouts-detail [ono]
-  {:inout (clojure.set/rename-keys (divide-info-ono ono) {:base_date :base-date})
+  {:inout   (convert-keys (divide-info-ono ono))
    :divides (->> (divide-info-ono-after ono)
-                 (map #(clojure.set/rename-keys % {:bucket_name :bucket-name})))})
+                 (map #(convert-keys %)))})
 
 (defn bucket-divides-detail [dno]
   (let [divide (divide-info-dno dno)]

@@ -28,11 +28,15 @@
                                         [:div
                                          [:div.columns
                                           [:div.column
-                                           [:p.is-pulled.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
+                                           [:p.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
 
                                          [:div.columns
                                           [:div.column
-                                           [:p.title.is-3 (str (:amount (:bucket @s-bucket-divides)) " 원")]]]
+                                           [:p (:comment (:bucket @s-bucket-divides))]]]
+
+                                         [:div.columns
+                                          [:div.column
+                                           [:p.title.is-3 (:amount (:bucket @s-bucket-divides))]]]
 
                                          [:div.columns
                                           [:div.column
@@ -166,7 +170,7 @@
            [:span.is-pulled-left.is-italic
             [:a {:href (rfe/href ::tong {:tid "main"})}
                "입출 이력"]]
-           [:span.is-pulled-right.has-text-weight-bold (str "마지막 " (:last-inout @s-main))]]]
+           [:span.is-pulled-right.has-text-weight-bold (str "마지막 입출금 " (:last-inout @s-main))]]]
 
          #_[:div.columns.mt-5
             [:div.column
@@ -215,7 +219,7 @@
             [:p.title.is-4 "버켓"]
             [:table.table.is-fullwidth.is-striped
              [:thead
-              [:th "버켓"]
+              [:th "bucket"]
               [:th "amount"]
               [:th "comment"]]
 
