@@ -7,7 +7,9 @@
                 [com.andrewmcveigh/cljs-time "0.5.2"]
                 [cljs-http "0.1.46"]
                 [metosin/reitit "0.5.15"]
-                [fipp "0.6.24"]]
+                [fipp "0.6.24"]
+                [cheshire "5.13.0"]]
+
  :builds       {:frontend
                 {:target     :browser
                  :output-dir "resources/public/js"

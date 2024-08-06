@@ -3,7 +3,8 @@
             [clojure.edn :as edn]
             [cljs-time.core :as time]
             [cljs-time.format :as timef]
-            [reagent.core :refer [atom]]))
+            [reagent.core :refer [atom]]
+            [tbuck.cljs.util :refer [add-comma]]))
 
 
 (defonce s-main (atom {}))
@@ -16,18 +17,7 @@
 
 
 
-(def custom-formatter (timef/formatter "yyyy-MM-dd'T'hh:mm:ss'Z"))
-(def knot-time-format (timef/formatter "yyyy.MM.dd hh:mm:ss"))
 
-
-
-(defn o2o [subject]
-      (-> subject
-          (str/replace #"0" "o")
-          (str/replace #"^.*?/" "")))
-
-(defn add-comma [num]
-      (.toLocaleString num))
 
 (defn set-main [{:keys [tong-name tong-amount is-valid-sum last-inout buckets]}]
       (reset! s-main {:tong-name tong-name

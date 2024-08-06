@@ -6,11 +6,25 @@
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
             [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides]]
-            [tbuck.cljs.actions :as action]))
+            [tbuck.cljs.actions :as action]
+            [tbuck.cljs.util :refer [today-in-yyyymmdd]]))
 
 (defonce match (reagent/atom nil))
 
 (defonce is-inout-divides-modal (reagent/atom false))
+(defonce is-inout-new-modal (reagent/atom false))
+
+(defonce input-inout-new (reagent/atom {:amount    ""
+                                        :base-date ""
+                                        :comment   ""}))
+
+(defn open-inout-new-modal []
+      (swap! input-inout-new assoc :base-date (today-in-yyyymmdd))
+      (reset! is-inout-new-modal true))
+
+(defn close-inout-new-modal []
+      (swap! input-inout-new assoc :amount "" :base-date (today-in-yyyymmdd) :comment "")
+      (reset! is-inout-new-modal false))
 
 (defn log-fn [& params]
       (fn [_]
@@ -20,47 +34,47 @@
 (defn bucket-page [match]
       (let [{:keys [path]} (:parameters match)]
            (reagent/create-class
-             {:display-name         "Bucket >"
-              :component-did-mount  (fn [this]
+             {:display-name        "Bucket >"
+              :component-did-mount (fn [this]
 
-                                        (action/get-bucket-divides (:bid path)))
-              :reagent-render       (fn []
-                                        [:div
-                                         [:div.columns
-                                          [:div.column
-                                           [:p.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
+                                       (action/get-bucket-divides (:bid path)))
+              :reagent-render      (fn []
+                                       [:div
+                                        [:div.columns
+                                         [:div.column
+                                          [:p.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
 
-                                         [:div.columns
-                                          [:div.column
-                                           [:p (:comment (:bucket @s-bucket-divides))]]]
+                                        [:div.columns
+                                         [:div.column
+                                          [:p (:comment (:bucket @s-bucket-divides))]]]
 
-                                         [:div.columns
-                                          [:div.column
-                                           [:p.title.is-3 (:amount (:bucket @s-bucket-divides))]]]
+                                        [:div.columns
+                                         [:div.column
+                                          [:p.title.is-3 (:amount (:bucket @s-bucket-divides))]]]
 
-                                         [:div.columns
-                                          [:div.column
-                                           [:table.table.is-fullwidth.is-striped
-                                            [:thead
-                                             [:th "amount"]
-                                             [:th "comment"]
-                                             [:th]]
-                                            [:tbody
-                                             (for [div (:divides @s-bucket-divides)]
-                                                  ^{:key div}
-                                                  [:tr
-                                                   [:td (:amount div)]
-                                                   [:td (:base-date div)
-                                                    [:br]
-                                                    (:comment div)]
-                                                   [:td
+                                        [:div.columns
+                                         [:div.column
+                                          [:table.table.is-fullwidth.is-striped
+                                           [:thead
+                                            [:th "amount"]
+                                            [:th "comment"]
+                                            [:th]]
+                                           [:tbody
+                                            (for [div (:divides @s-bucket-divides)]
+                                                 ^{:key div}
+                                                 [:tr
+                                                  [:td (:amount div)]
+                                                  [:td (:base-date div)
+                                                   [:br]
+                                                   (:comment div)]
+                                                  [:td
 
 
-                                                    [:a.button
-                                                     {:on-click #(do (action/get-bucket-divides-detail (:dno div))
-                                                                     (reset! is-inout-divides-modal true))}
-                                                     [:span.icon-text
-                                                      [:span.icon [:i.fas.fa-layer-group]]]]]])]]]]])})))
+                                                   [:a.button
+                                                    {:on-click #(do (action/get-bucket-divides-detail (:dno div))
+                                                                    (reset! is-inout-divides-modal true))}
+                                                    [:span.icon-text
+                                                     [:span.icon [:i.fas.fa-layer-group]]]]]])]]]]])})))
 
 
 
@@ -98,27 +112,41 @@
                                             [:th "comment"]
                                             [:th]]
                                            [:tbody
-                                             (for [inout (:inouts @s-tong-inouts)]
-                                                  ^{:key inout}
-                                                  [:tr
-                                                   [:td (:amount inout)]
-                                                   [:td (:base-date inout)
-                                                    [:br]
-                                                    (:comment inout)]
-                                                   [:td
-                                                    [:div.field.is-grouped
-                                                     [:div.control
-                                                      [:a.button.is-small
-                                                       {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
-                                                                       (reset! is-inout-divides-modal true))}
-                                                       [:span.icon-text
-                                                        [:span.icon [:i.fas.fa-layer-group]]]]]
-                                                     [:div.control
-                                                      [:a.button.is-small
-                                                       {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
-                                                                       (reset! is-inout-divides-modal true))}
-                                                       [:span.icon-text
-                                                        [:span.icon [:i.fas.fa-divide]]]]]]]])]]]]])})))
+                                            (for [inout (:inouts @s-tong-inouts)]
+                                                 ^{:key inout}
+                                                 [:tr
+                                                  [:td (:amount inout)]
+                                                  [:td (:base-date inout)
+                                                   [:br]
+                                                   (:comment inout)]
+                                                  [:td
+                                                   (if (:is_divide inout)
+                                                     ; true - history
+                                                     [:div.field.is-grouped
+                                                      [:div.control
+                                                       [:a.button.is-small
+                                                        {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
+                                                                        (reset! is-inout-divides-modal true))}
+                                                        [:span.icon-text
+                                                         [:span.icon [:i.fas.fa-layer-group]]]]]]
+                                                     ; false - divide
+                                                     [:div.field.is-grouped
+                                                      [:div.control
+                                                       [:a.button.is-small.is-info
+                                                        {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
+                                                                        (reset! is-inout-divides-modal true))}
+                                                        [:span.icon-text
+                                                         [:span.icon [:i.fas.fa-divide]]]]]
+                                                      ; false - remove
+                                                      [:div.control
+                                                       [:a.button.is-small.is-danger
+                                                        {:on-click #(when (js/confirm (str (:comment inout) " - 삭제할까?"))
+                                                                          (action/remove-tong-inout "main" (:ono inout))
+                                                                          (js/console.log "ok"))}
+
+                                                        [:span.icon-text
+                                                         [:span.icon [:i.fas.fa-trash]]]]]])]])]]]]])})))
+
 
 
 
@@ -190,10 +218,19 @@
 
          [:div.columns.mt-5
           [:div.column
-           [:span.is-pulled-left.is-italic
-            [:a {:href (rfe/href ::tong {:tid "main"})}
-               "입출 이력"]]
+           [:div.field.is-grouped.is-pulled-left
+            [:div.control
+             [:a.button.is-small {:href (rfe/href ::tong {:tid "main"})}
+              [:span.icon-text
+               [:span.icon [:i.fas.fa-history]]]]]
+            [:div.control
+             [:a.button.is-small
+              {:on-click #(open-inout-new-modal)}
+              [:span.icon-text
+               [:span.icon [:i.fas.fa-plus]]]]]]
            [:span.is-pulled-right.has-text-weight-bold (str "마지막 입출금 " (:last-inout @s-main))]]]
+
+
 
          #_[:div.columns.mt-5
             [:div.column
@@ -214,13 +251,55 @@
              [:span.icon [:i.fas.fa-copyright]]
              [:span "Mel family"]]]]
 
+
+       [:div.modal {:id "inout-new-modal" :class (if @is-inout-new-modal "is-active" "")}
+        [:div.modal-background]
+        [:div.modal-card
+         [:header.modal-card-head
+          [:p.modal-card-title "입출금 추가"]
+          [:button.delete {:aria-label "close"
+                           :on-click   #(reset! is-inout-new-modal false)}]]
+         [:section.modal-card-body
+          [:div.columns
+           [:div.column
+            [:p.title.is-4 ""]
+            [:div.field
+             [:label.label "금액"]
+             [:div.control
+              [:input.input {:type      "tel"
+                             :value     (:amount @input-inout-new)
+                             :on-change #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
+
+            [:div.field
+             [:label.label "날짜"]
+             [:div.control
+              [:input.input {:type      "tel"
+                             :value     (:base-date @input-inout-new)
+                             :on-change #(swap! input-inout-new assoc :base-date (-> % .-target .-value))}]]]
+
+            [:div.field
+             [:label.label "메모"]
+             [:div.control
+              [:input.input {:type      "text"
+                             :value     (:comment @input-inout-new)
+                             :on-change #(swap! input-inout-new assoc :comment (-> % .-target .-value))}]]]]]]
+
+         [:footer.modal-card-foot
+          [:div.buttons
+           [:button.button.is-info
+            {:on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
+           [:button.button
+            {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]
+
+
+
        [:div.modal {:id "ono-modal" :class (if @is-inout-divides-modal "is-active" "")}
         [:div.modal-background]
         [:div.modal-card
          [:header.modal-card-head
           [:p.modal-card-title "입출금 분배"]
           [:button.delete {:aria-label "close"
-                           :on-click #(reset! is-inout-divides-modal false)}]]
+                           :on-click   #(reset! is-inout-divides-modal false)}]]
          [:section.modal-card-body
           [:div.columns
            [:div.column
