@@ -5,7 +5,7 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides s-buckets s-divide-new-ready]]
             [tbuck.cljs.actions :as action]
             [tbuck.cljs.util :refer [today-in-yyyymmdd]]))
 
@@ -13,10 +13,34 @@
 
 (defonce is-inout-divides-modal (reagent/atom false))
 (defonce is-inout-new-modal (reagent/atom false))
+(defonce is-divide-new-modal (reagent/atom false))
+
+
 
 (defonce input-inout-new (reagent/atom {:amount    ""
                                         :base-date ""
                                         :comment   ""}))
+
+(defonce input-divide-new-buckets (reagent/atom {}))
+(defonce input-divide-new-remain (reagent/atom 0))
+(defonce input-divide-new-sum-check (reagent/atom false))
+
+(defn calculate-sum [data]
+      (- (js/parseInt (-> @s-divide-new-ready :inout :amount))
+         (reduce + (map (comp js/parseInt :val) (vals data)))))
+
+(add-watch input-divide-new-buckets :update-sum
+           (fn [_ _ _ new-state]
+               (reset! input-divide-new-remain (calculate-sum new-state))))
+
+(add-watch input-divide-new-remain :update-sum-check
+           (fn [_ _ _ new-state]
+               (reset! input-divide-new-sum-check (= new-state 0))))
+
+
+
+
+
 
 (defn open-inout-new-modal []
       (swap! input-inout-new assoc :base-date (today-in-yyyymmdd))
@@ -25,6 +49,21 @@
 (defn close-inout-new-modal []
       (swap! input-inout-new assoc :amount "" :base-date (today-in-yyyymmdd) :comment "")
       (reset! is-inout-new-modal false))
+
+
+
+(defn open-divide-new-modal [ono]
+      (action/get-divide-new-ready
+        ono
+        (fn []
+            (reset! input-divide-new-buckets (into {} (map (fn [[k v]] {k (merge v {:val 0})})
+                                                           (:buckets @s-divide-new-ready))))
+            (reset! is-divide-new-modal true))))
+
+(defn close-divide-new-modal []
+      (reset! input-divide-new-buckets nil)
+      (reset! input-divide-new-remain 0)
+      (reset! is-divide-new-modal false))
 
 (defn log-fn [& params]
       (fn [_]
@@ -133,8 +172,9 @@
                                                      [:div.field.is-grouped
                                                       [:div.control
                                                        [:a.button.is-small.is-info
-                                                        {:on-click #(do (action/get-tong-inouts-detail (:ono inout))
-                                                                        (reset! is-inout-divides-modal true))}
+                                                        {:on-click #(do (action/get-bucket-list)
+                                                                        (open-divide-new-modal (:ono inout)))}
+
                                                         [:span.icon-text
                                                          [:span.icon [:i.fas.fa-divide]]]]]
                                                       ; false - remove
@@ -252,6 +292,7 @@
              [:span "Mel family"]]]]
 
 
+       ; inout new
        [:div.modal {:id "inout-new-modal" :class (if @is-inout-new-modal "is-active" "")}
         [:div.modal-background]
         [:div.modal-card
@@ -290,7 +331,6 @@
             {:on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
            [:button.button
             {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]
-
 
 
        [:div.modal {:id "ono-modal" :class (if @is-inout-divides-modal "is-active" "")}
@@ -336,7 +376,97 @@
          [:footer.modal-card-foot
           [:div.buttons
            [:button.button.is-fullwidth
-            {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]])
+            {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]
+
+
+       ; divide new
+       (when @is-divide-new-modal
+             [:div.modal {:id "inout-new-modal" :class (if @is-divide-new-modal "is-active" "")}
+              [:div.modal-background]
+              [:div.modal-card
+               [:header.modal-card-head
+                [:p.modal-card-title "버켓 분배"]
+                [:button.delete {:aria-label "close"
+                                 :on-click   #(reset! is-divide-new-modal false)}]]
+               [:section.modal-card-body
+                [:div.columns
+                 [:div.column
+                  [:p.title.is-4 "입출금 정보"]
+
+                  [:div.field.is-horizontal
+                   [:div.field-label.is-normal
+                    [:label.label "날짜"]]
+                   [:div.field-body
+                    [:div.field
+                     [:div.control
+                      [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :base-date)}]]]]]
+
+                  [:div.field.is-horizontal
+                   [:div.field-label.is-normal
+                    [:label.label "amount"]]
+                   [:div.field-body
+                    [:div.field
+                     [:div.control
+                      [:input.input {:disabled "disabled" :value (.toLocaleString (-> @s-divide-new-ready :inout :amount))}]]]]]
+
+                  [:div.field.is-horizontal
+                   [:div.field-label.is-normal
+                    [:label.label "comment"]]
+                   [:div.field-body
+                    [:div.field
+                     [:div.control
+                      [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :comment)}]]]]]
+
+                  [:hr]
+
+                  [:p.title.is-4 "버켓 분배 정보"]
+
+                  [:div.field.is-horizontal
+                   [:div.field-label.is-normal
+                    [:label.label.is-size-3 "남음"]]
+                   [:div.field-body
+                    [:div.field
+                     [:div.control
+                      [:p.is-size-3 (.toLocaleString @input-divide-new-remain)]]]]]
+
+
+                  [:div
+                   (for [[k bucket] @input-divide-new-buckets]
+                        ^{:key k}
+
+                        [:div.field.is-horizontal
+                         [:div.field-label.is-normal
+                          [:div.control
+                           [:label.label (:bucket-name bucket)]]]
+
+                         [:div.field-body
+                          [:div.field
+                           [:div.control
+                            [:input.input {:type     "tel"
+                                           :disabled "disabled"
+                                           :style    {:text-align "right"}
+                                           :value    (.toLocaleString (:amount bucket))}]]]
+
+                          [:div.field
+                           [:div.control
+                            [:input.input {:type      "tel"
+                                           :value     (:val bucket)
+                                           :style     {:text-align "right"}
+                                           :on-change #(swap! input-divide-new-buckets assoc-in [k :val] (-> % .-target .-value))}]]]]])]]]]
+
+
+
+               [:footer.modal-card-foot
+                [:div.buttons
+                 [:button.button.is-info
+                  {:disabled (if @input-divide-new-sum-check "" "disabled")
+                   :on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
+                 [:button.button
+                  {:on-click #(close-divide-new-modal)} "닫기"]]]]])])
+
+
+
+
 
 
 

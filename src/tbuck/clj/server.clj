@@ -33,12 +33,16 @@
                                                         {:keys [amount base-date comment]} :body-params}]
                                                     (api/tong-inout-new tid amount base-date comment))}}]
 
+        ["/buckets" {:get {:responses {200 {}}
+                           :handler   (fn [_]
+                                        (api/bucket-list "main"))}}]
 
         ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
                                        :responses  {200 {}}
                                        :handler    (fn [{{{:keys [bid]} :path} :parameters}]
                                                      {:status 200
                                                       :body   (api/bucket-divides bid)})}}]
+
 
         ["/inouts/:ono" {:get    {:parameters {:path {:ono int?}}
                                   :responses  {200 {:piece {}}}
@@ -52,6 +56,19 @@
                                                 (clojure.pprint/pprint ono)
                                                 {:status 200
                                                  :body   (api/tong-inouts-removing ono)})}}]
+        ["/inout/:ono/divide-new-ready"
+         ; divide 를 위한 정보 조회
+         {:get    {:parameters {:path {:ono int?}}
+                   :responses  {200 {}}
+                   :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                 (api/inout-info-for-divide-new ono))}
+          ; divide new
+          :post   {:parameters {:path {:ono int?}}
+                   :responses  {200 {:piece {}}}
+                   :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                 (clojure.pprint/pprint ono)
+                                 {:status 200
+                                  :body   (api/tong-inouts-removing ono)})}}]
 
         ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
                                 :responses  {200 {}}
@@ -82,6 +99,9 @@
   (println "start!"))
 
 (comment
+  (app-route {:uri     "/api/buckets" :request-method :get
+              :headers {"Content-Type" "application/json"}})
+
   (-> (app-route {:uri     "/api/tong/main/inout-new" :request-method :post
                   :form    {:amount 1000 :base-date "20240803" :comment "hi"}
                   :headers {"Content-Type" "application/json"}})
@@ -92,3 +112,8 @@
   (-> (app-route {:uri "/api/tong/zxcv/inouts" :request-method :get})
       :body slurp json/read-str))
 
+
+
+(comment
+  (let [x [{:amount 40} {:amount 50}]]
+    (reduce + (map #(get % :amount) x))))

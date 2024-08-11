@@ -16,7 +16,10 @@
           (str/replace #"^.*?/" "")))
 
 (defn add-comma [num]
-      (.toLocaleString num))
+      (if num
+        (.toLocaleString num)
+        "-"))
+
 
 
 (defn today-in-yyyymmdd []

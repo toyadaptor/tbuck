@@ -38,7 +38,7 @@
         (and (= "t" cmd) (some? con)) (t/table (inout-list con))
         (and (= "b" cmd) (nil? con)) (t/table (bucket-list))
         (and (= "b" cmd) (some? con)) (t/table (bucket-divide-list con))
-        (and (= "tn" cmd) (some? con)) (if-not (nil? (inout-get con))
+        (and (= "tn" cmd) (some? con)) (if-not (nil? (tong-get con))
                                          (let [tid con]
                                            (println "### inout-new")
                                            (println "tid : " tid)

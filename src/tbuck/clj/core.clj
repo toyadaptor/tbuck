@@ -264,14 +264,14 @@
 
 
 
-(defn inout-get [tid]
+(defn tong-get [tid]
   (first (j/query dbspec
                   (-> (select :tid)
                       (from :tong)
                       (where [:= :tid tid])
                       (sql/format)))))
 
-(comment (inout-get "main"))
+(comment (tong-get "main"))
 
 (defn inout-new [tid amount comment base_date]
   (j/execute! dbspec (-> (insert-into :inout)
