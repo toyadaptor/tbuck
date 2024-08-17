@@ -78,8 +78,22 @@
        :body   {:inout   inout
                 :buckets buckets}})
     (catch Exception e
-      {:status 500}
-      :body {:error-text (.getMessage e)})))
+      {:status 500
+       :body   {:error-text (.getMessage e)}})))
 
+
+
+(defn divide-new [ono divides]
+  (try
+    (if-let [inout (core/inout-get ono)]
+      {:status 200
+       :body   {:inout         inout
+                :divides-input divides}})
+    (catch Exception e
+      {:status 500
+       :body   {:error-text (.getMessage e)}})))
+
+(comment
+  (core/inout-get 49))
 
 

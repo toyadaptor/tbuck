@@ -307,9 +307,10 @@
             [:div.field
              [:label.label "금액"]
              [:div.control
-              [:input.input {:type      "tel"
-                             :value     (:amount @input-inout-new)
-                             :on-change #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
+              [:input.input {:type         "tel"
+                             :value        (:amount @input-inout-new)
+                             :place-holder "0 이면 버켓 리밸런싱"
+                             :on-change    #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
 
             [:div.field
              [:label.label "날짜"]

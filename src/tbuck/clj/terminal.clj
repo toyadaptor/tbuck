@@ -51,7 +51,7 @@
                                              (println "input : " amount comment base_date)
                                              (inout-new tid amount comment base_date))))
         (and (= "tr" cmd) (some? con)) (inout-remove (edn/read-string con))
-        (and (= "dn" cmd) (some? con)) (divide-new (edn/read-string con))
+        (and (= "dn" cmd) (some? con)) (terminal-divide-new (edn/read-string con))
         (and (= "to" cmd) (some? con)) (let [ono (edn/read-string con)]
                                          (println "### divide-info-ono")
                                          (println "# inout info")
