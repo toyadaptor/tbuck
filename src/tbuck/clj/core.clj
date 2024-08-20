@@ -9,6 +9,7 @@
     [clojure.string :as str]
     [clojure.edn :as edn]))
 
+
 (def dbspec {:dbtype      "postgresql"
              :dbname      (env :db-name)
              :host        (env :db-host)
@@ -17,26 +18,20 @@
              :password    (env :db-password)
              :auto-commit true})
 
-;(defn inout-sum [tid]
-;  (println "# inout-sum. tid : " tid)
-;  (j/with-db-connection [tx dbspec]
-;                        (j/execute! tx
-;                                    (-> (helpers/update :tong)
-;                                        (sset {:amount (-> (select (sql/call :coalesce (sql/call :sum :amount) 0))
-;                                                           (from :inout)
-;                                                           (where [:= :tid tid]))})
-;                                        (where [:= :tid tid])
-;                                        (sql/format)))))
+
 (defn inout-sum [tid]
   (println "# inout-sum. tid : " tid)
   (j/with-db-connection [tx dbspec]
                         (j/execute! tx
                                     (sql/format
                                       {:update :tong
-                                       :set    {:amount {:select [(sql/call :coalesce (sql/call :sum :amount) 0)]
+                                       :set    {:amount {:select [[(sql/call :coalesce (sql/call :sum :amount) 0)]]
                                                          :from   :inout
                                                          :where  [:= :tid tid]}}
                                        :where  [:= :tid tid]}))))
+
+
+
 
 
 
@@ -378,30 +373,17 @@
     (j/query dbspec
              (sql/format
                {:select [:*]
-                :from [:inout]
-                :where [:= :ono ono]}))))
-
-
-
-
-
-#_(defn divide-info-dno [dno]
-    (let [row (first (j/query dbspec
-                              (-> (select :dno :ono :bid :amount :create_date :comment)
-                                  (from :divide)
-                                  (where [:= :dno dno])
-                                  sql/format)))]
-      {:divide-info row
-       :inout-info  (divide-info-ono (:ono row))}))
+                :from   [:inout]
+                :where  [:= :ono ono]}))))
 
 
 (defn divide-info-dno [dno]
   (first
     (j/query dbspec
              (sql/format
-               {:select [:dno :ono :bid :amount :create_date :comment]}
-               :from [:divide]
-               :where [:= :dno dno]))))
+               {:select [:dno :ono :bid :amount :create_date :comment]
+                :from :divide
+                :where [:= :dno dno]}))))
 
 
 
@@ -436,8 +418,8 @@
     (j/query dbspec
              (sql/format
                {:select [:tid]
-                :from [:tong]
-                :where [:= :tid tid]}))))
+                :from   [:tong]
+                :where  [:= :tid tid]}))))
 
 
 
