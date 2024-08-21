@@ -461,7 +461,16 @@
                 [:div.buttons
                  [:button.button.is-info
                   {:disabled (if @input-divide-new-sum-check "" "disabled")
-                   :on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
+                   :on-click #(do (action/create-bucket-divide (-> @s-divide-new-ready :inout :ono)
+                                                               @input-divide-new-buckets
+                                                               (fn [response]
+                                                                   (if (= 200 (:status response))
+                                                                     (do (close-divide-new-modal)
+                                                                         (action/get-tong-inouts "main"))
+                                                                     (js/alert (-> response :body :error-text))))))}
+                  "저장"]
+
+
                  [:button.button
                   {:on-click #(close-divide-new-modal)} "닫기"]]]]])])
 

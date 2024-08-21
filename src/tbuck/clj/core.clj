@@ -34,46 +34,27 @@
 
 
 
-
-;(defn bucket-sum [bid]
-;  (println "# bucket-sum. bid: " bid)
-;  (j/with-db-connection [tx dbspec]
-;                        (j/execute! tx
-;                                    (-> (helpers/update :bucket)
-;                                        (sset {:amount (-> (select [(sql/call :sum :amount) :amount_sum])
-;                                                           (from :divide)
-;                                                           (where [:= :bid bid]))})
-;
-;                                        (where [:= :bid bid])
-;                                        (sql/format)))))
-
 (defn bucket-sum [bid]
   (println "# bucket-sum. bid: " bid)
   (j/with-db-connection [tx dbspec]
                         (j/execute! tx
                                     (sql/format
                                       {:update :bucket
-                                       :set    {:amount {:select [(sql/call :sum :amount) :amount_sum]
-                                                         :from   [:divide]
+                                       :set    {:amount {:select :%sum.amount
+                                                         :from   :divide
                                                          :where  [:= :bid bid]}}
                                        :where  [:= :bid bid]}))))
 
-
-
-;(defn tong-get [tid]
-;  (first (j/query dbspec (->
-;                           (select :tid :amount :tong_name)
-;                           (from :tong)
-;                           (where [:= :tid tid])
-;                           sql/format))))
 
 (defn tong-get [tid]
   (first
     (j/query dbspec
              (sql/format
                {:select [:tid :amount :tong_name]
-                :from   [:tong]
+                :from   :tong
                 :where  [:= :tid tid]}))))
+
+(tong-get "main")
 
 
 (defn tong-list []
@@ -343,20 +324,32 @@
             (j/with-db-connection [tx dbspec]
                                   (j/execute! tx
                                               (sql/format
-                                                {:insert-into :divide}
-                                                :columns [:ono :amount :bid :comment :etc :base_date]
-                                                :values [[ono amount bid (:comment row) "etc" (:base_date row)]]))
-
+                                                {:insert-into :divide
+                                                 :columns [:ono :amount :bid :comment :etc :base_date]
+                                                 :values [[ono amount bid (:comment row) "etc" (:base_date row)]]}))
                                   (j/execute! tx
                                               (sql/format
-                                                {:update :inout}
-                                                :set {:is_divide true}
-                                                :where [:= :ono ono]))
-
+                                                {:update :inout
+                                                 :set {:is_divide true}
+                                                 :where [:= :ono ono]}))
                                   (bucket-sum bid))
 
             (recur (- sum amount) (inc cnt))))))))
 
+(defn divide-new [tid ono list]
+  (j/with-db-connection [tx dbspec]
+                        (j/execute! tx
+                                    (sql/format
+                                      {:insert-into :divide
+                                       :values list}))
+                        (j/execute! tx
+                                    (sql/format
+                                      {:update :inout
+                                       :set {:is_divide true}
+                                       :where [:= :ono ono]})))
+  (doseq [item list]
+    (bucket-sum (:bid item)))
+  (inout-sum tid))
 
 (defn divide-info-ono-after [ono]
   (j/query dbspec
@@ -417,9 +410,10 @@
   (first
     (j/query dbspec
              (sql/format
-               {:select [:tid]
-                :from   [:tong]
+               {:select :*
+                :from   :tong
                 :where  [:= :tid tid]}))))
+
 
 
 
@@ -469,6 +463,9 @@
                           (println "deleted.")
                           (inout-sum (:tid inout)))
     (println "no ono")))
+
+
+
 
 
 

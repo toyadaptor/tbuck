@@ -1,6 +1,7 @@
 (ns tbuck.clj.server
   (:require
     [clojure.data.json :as json]
+    [reitit.core :as reitit]
     [tbuck.clj.api :as api]
     [muuntaja.core :as muun]
     [reitit.ring :as ring]
@@ -11,79 +12,84 @@
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cors :refer [wrap-cors]]))
 
+(def app-router
+  (ring/router
+    [["/api"
+      ["/main" {:get {:parameters {}
+                      :responses  {200 {}}
+                      :handler    (fn [{:keys []}]
+                                    {:status 200
+                                     :body   (api/main "main")})}}]
+      ["/tong/:tid/inouts" {:get  {:parameters {:path {:tid string?}}
+                                   :handler    (fn [{{{:keys [tid]} :path} :parameters}]
+                                                 (clojure.pprint/pprint tid)
+                                                 {:status 200
+                                                  :body   (api/tong-inouts tid)})}
+                            :post {:parameters  {:path {:tid string?}}
+                                   :body-params {:amount    int?
+                                                 :base-date string?
+                                                 :comment   string?}
+                                   :handler     (fn [{{{:keys [tid]} :path}              :parameters
+                                                      {:keys [amount base-date comment]} :body-params}]
+                                                  (api/tong-inout-new tid amount base-date comment))}}]
+
+      ["/buckets" {:get {:responses {200 {}}
+                         :handler   (fn [_]
+                                      (api/bucket-list "main"))}}]
+
+      ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
+                                     :responses  {200 {}}
+                                     :handler    (fn [{{{:keys [bid]} :path} :parameters}]
+                                                   {:status 200
+                                                    :body   (api/bucket-divides bid)})}}]
+
+
+      ["/inouts/:ono" {:get    {:parameters {:path {:ono int?}}
+                                :responses  {200 {:piece {}}}
+                                :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                              (clojure.pprint/pprint ono)
+                                              {:status 200
+                                               :body   (api/tong-inouts-detail ono)})}
+                       :delete {:parameters {:path {:ono int?}}
+                                :responses  {200 {:piece {}}}
+                                :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                              (clojure.pprint/pprint ono)
+                                              {:status 200
+                                               :body   (api/tong-inouts-removing ono)})}}]
+      ["/inout/:ono/divide-new-ready"
+       ; divide 를 위한 정보 조회
+       {:get {:parameters {:path {:ono int?}}
+              :responses  {200 {}}
+              :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                            (api/inout-info-for-divide-new ono))}}]
+
+      ["/inout/:ono/divide-new"
+       ; divide new
+       {:post {:parameters  {:path {:ono int?}}
+               :body-params {:divides map?}
+               :responses   {200 {:body map?}}
+               :handler     (fn [{{{:keys [ono]} :path} :parameters
+                                  {:keys [divides]}      :body-params}]
+                              (api/divide-new "main" ono divides))}}]
+
+
+      ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
+                              :responses  {200 {}}
+                              :handler    (fn [{{{:keys [dno]} :path} :parameters}]
+                                            {:status 200
+                                             :body   (api/bucket-divides-detail dno)})}}]]]
+
+
+    {:data {:coercion   reitit.coercion.spec/coercion
+            :muuntaja   muun/instance
+            :middleware [rrm-muuntaja/format-middleware
+                         rrm-parameter/parameters-middleware
+                         rrc/coerce-exceptions-middleware
+                         rrc/coerce-request-middleware
+                         rrc/coerce-response-middleware]}}))
 (def app-route
   (ring/ring-handler
-    (ring/router
-      [["/api"
-        ["/main" {:get {:parameters {}
-                        :responses  {200 {}}
-                        :handler    (fn [{:keys []}]
-                                      {:status 200
-                                       :body   (api/main)})}}]
-        ["/tong/:tid/inouts" {:get  {:parameters {:path {:tid string?}}
-                                     :handler    (fn [{{{:keys [tid]} :path} :parameters}]
-                                                   (clojure.pprint/pprint tid)
-                                                   {:status 200
-                                                    :body   (api/tong-inouts tid)})}
-                              :post {:parameters  {:path {:tid string?}}
-                                     :body-params {:amount    int?
-                                                   :base-date string?
-                                                   :comment   string?}
-                                     :handler     (fn [{{{:keys [tid]} :path}              :parameters
-                                                        {:keys [amount base-date comment]} :body-params}]
-                                                    (api/tong-inout-new tid amount base-date comment))}}]
-
-        ["/buckets" {:get {:responses {200 {}}
-                           :handler   (fn [_]
-                                        (api/bucket-list "main"))}}]
-
-        ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
-                                       :responses  {200 {}}
-                                       :handler    (fn [{{{:keys [bid]} :path} :parameters}]
-                                                     {:status 200
-                                                      :body   (api/bucket-divides bid)})}}]
-
-
-        ["/inouts/:ono" {:get    {:parameters {:path {:ono int?}}
-                                  :responses  {200 {:piece {}}}
-                                  :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                                (clojure.pprint/pprint ono)
-                                                {:status 200
-                                                 :body   (api/tong-inouts-detail ono)})}
-                         :delete {:parameters {:path {:ono int?}}
-                                  :responses  {200 {:piece {}}}
-                                  :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                                (clojure.pprint/pprint ono)
-                                                {:status 200
-                                                 :body   (api/tong-inouts-removing ono)})}}]
-        ["/inout/:ono/divide-new-ready"
-         ; divide 를 위한 정보 조회
-         {:get    {:parameters {:path {:ono int?}}
-                   :responses  {200 {}}
-                   :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                 (api/inout-info-for-divide-new ono))}
-          ; divide new
-          :post   {:parameters {:path {:ono int?}}
-                   :responses  {200 {:piece {}}}
-                   :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                 (clojure.pprint/pprint ono)
-                                 {:status 200
-                                  :body   (api/tong-inouts-removing ono)})}}]
-
-        ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
-                                :responses  {200 {}}
-                                :handler    (fn [{{{:keys [dno]} :path} :parameters}]
-                                              {:status 200
-                                               :body   (api/bucket-divides-detail dno)})}}]]]
-
-
-      {:data {:coercion   reitit.coercion.spec/coercion
-              :muuntaja   muun/instance
-              :middleware [rrm-muuntaja/format-middleware
-                           rrm-parameter/parameters-middleware
-                           rrc/coerce-exceptions-middleware
-                           rrc/coerce-request-middleware
-                           rrc/coerce-response-middleware]}})
+    app-router
     (ring/routes
       (ring/create-resource-handler {:path "/"})
       (ring/create-default-handler))))
@@ -99,6 +105,13 @@
   (println "start!"))
 
 (comment
+  (reitit.core/routes app-router)
+  (app-route {:uri            "/api/inout/51/divide-new"
+              :request-method :post
+              :headers        {"Content-Type" "application/json"}})
+
+
+
   (app-route {:uri     "/api/buckets" :request-method :get
               :headers {"Content-Type" "application/json"}})
 
@@ -114,6 +127,3 @@
 
 
 
-(comment
-  (let [x [{:amount 40} {:amount 50}]]
-    (reduce + (map #(get % :amount) x))))

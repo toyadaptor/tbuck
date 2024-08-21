@@ -45,12 +45,17 @@
                (state/set-divides-detail (-> response :body)))))
 
 
+
+
+
+
+
 (defn create-tong-inout [tid {:keys [amount base-date comment]} close-fn]
       (go (let [response (<! (http/post (str backend "/api/tong/" tid "/inouts")
                                         {:with-credentials? false
-                                         :json-params {:amount    (js/parseInt amount 10)
-                                                       :base-date base-date
-                                                       :comment   comment}}))]
+                                         :json-params       {:amount    (js/parseInt amount 10)
+                                                             :base-date base-date
+                                                             :comment   comment}}))]
                (if (= 200 (:status response))
                  (do (close-fn)
                      (get-tong-inouts tid))
@@ -59,7 +64,7 @@
 
 (defn remove-tong-inout [tid ono]
       (go (let [response (<! (http/delete (str backend "/api/inouts/" ono)
-                                        {:with-credentials? false}))]
+                                          {:with-credentials? false}))]
                (get-tong-inouts tid))))
 
 
@@ -70,6 +75,10 @@
                (callback))))
 
 
-
+(defn create-bucket-divide [ono divides callback]
+      (go (let [response (<! (http/post (str backend "/api/inout/" ono "/divide-new")
+                                        {:with-credentials? false
+                                         :json-params       {:divides divides}}))]
+               (callback response))))
 
 

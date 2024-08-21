@@ -6,9 +6,8 @@
                               :base_date   :base-date}))
 
 
-(defn main []
-  (let [tid "main"
-        tong (core/tong-get tid)
+(defn main [tid]
+  (let [tong (core/tong-get tid)
         buckets (->> (core/bucket-list tid)
                      (map #(convert-keys %)))
         inout (first (core/inout-list tid))]
@@ -83,17 +82,81 @@
 
 
 
-(defn divide-new [ono divides]
+(defn divide-new [tid ono divides]
   (try
+    (clojure.pprint/pprint divides)
     (if-let [inout (core/inout-get ono)]
-      {:status 200
-       :body   {:inout         inout
-                :divides-input divides}})
+      (let [list (->> (vals divides)
+                      (map #(merge % {:val (Integer/valueOf (:val %))}))
+                      (filter #(and (not= 0 (:val %))
+                                    (= "main" (:tid %)))))
+            sum (reduce + (map #(Integer/valueOf (:val %)) list))]
+        (clojure.pprint/pprint inout)
+        (clojure.pprint/pprint list)
+        (if (= (:amount inout) sum)
+          (core/divide-new tid ono (->> list
+                                        (map #(select-keys % [:val :bid]))
+                                        (map #(merge % {:ono       (:ono inout)
+                                                        :comment   (:comment inout)
+                                                        :base_date (:base_date inout)}))
+                                        (mapv #(clojure.set/rename-keys % {:val :amount}))))
+          (throw (Exception. "not same!")))))
+    {:status 200 :body   {}}
+
     (catch Exception e
       {:status 500
        :body   {:error-text (.getMessage e)}})))
 
 (comment
+
+
+
+  (let [x {:cover
+           {:tid         "main",
+            :amount      317702,
+            :val         "-800000",
+            :bucket-name "보험",
+            :bid         "cover"},
+           :loan
+           {:tid         "main",
+            :amount      2220000,
+            :val         "-1000000",
+            :bucket-name "대출",
+            :bid         "loan"},
+           :travel
+           {:tid         "main",
+            :amount      1000000,
+            :val         0,
+            :bucket-name "여행",
+            :bid         "travel"},
+           :event
+           {:tid "main", :amount 0, :val 0, :bucket-name "경조사", :bid "event"},
+           :stash
+           {:tid         "main",
+            :amount      -63767,
+            :val         0,
+            :bucket-name "비상금",
+            :bid         "stash"},
+           :buffer
+           {:tid "main", :amount 0, :val 0, :bucket-name "버퍼", :bid "buffer"}}]
+    (divide-new 51 x)
+    #_(let [list (filter #(not= 0 (:val %))
+                         (map #(Integer/valueOf (:val %)) (vals x)))]
+        list))
+
+
+
+  (let [list (filter #(not= 0 (:val %))
+                     (vals {:cover {:tid "main", :amount 317702, :val 0, :bucket-name "보험", :bid "cover"},
+                            :loan  {:tid "main", :amount 2220000, :val -180000, :bucket-name "대출", :bid "loan"}
+                            :nana  {:tid "main", :amount 2220000, :val -1800000, :bucket-name "대출", :bid "nana"}}))]
+
+    (reduce + (map :val list)))
+
+  ()
+
+  (let [x]
+    ())
   (core/inout-get 49))
 
 
