@@ -9,12 +9,51 @@
     [reitit.ring.middleware.muuntaja :as rrm-muuntaja]
     [reitit.ring.middleware.parameters :as rrm-parameter]
     [reitit.coercion.spec]
+    [ring.util.response :as response]
     [ring.adapter.jetty :as jetty]
-    [ring.middleware.cors :refer [wrap-cors]]))
+    [ring.middleware.cors :refer [wrap-cors]]
+    [buddy.auth.middleware :refer [wrap-authentication]]
+    [buddy.auth.backends.token :refer [jws-backend]]
+    [buddy.sign.jwt :as jwt]))
+
+
+(def secret "super-secret-key")
+
+
+(def users
+  {"user"  {:password "pass" :roles [:user]}
+   "admin" {:password "adminpass" :roles [:admin]}})
+
+(defn generate-token [username]
+  (jwt/sign {:user  username
+             :roles (get-in users [username :roles])}
+            secret))
+
+(defn authenticate [username password]
+  (if-let [user (get users username)]
+    (if (= password (:password user))
+      (generate-token username)
+      nil)))
+(defn login [username password]
+  (if-let [token (authenticate username password)]
+    {:status 200
+     :body   {:token token}}
+    {:status 401
+     :body   {:error "Invalid username or password"}}))
+
+(comment
+
+
+  (authenticate "user" "pass")
+  (login {:body {:username "user" :password "pass"}}))
 
 (def app-router
   (ring/router
     [["/api"
+      ["/login" {:post {:body-params {:username string?
+                                      :password string?}
+                        :handler (fn [{{:keys [username password]} :body-params}]
+                                   (login username password))}}]
       ["/main" {:get {:parameters {}
                       :responses  {200 {}}
                       :handler    (fn [{:keys []}]
@@ -69,7 +108,7 @@
                :body-params {:divides map?}
                :responses   {200 {:body map?}}
                :handler     (fn [{{{:keys [ono]} :path} :parameters
-                                  {:keys [divides]}      :body-params}]
+                                  {:keys [divides]}     :body-params}]
                               (api/divide-new "main" ono divides))}}]
 
 
@@ -95,10 +134,13 @@
       (ring/create-default-handler))))
 
 (def app
-  (wrap-cors app-route
-             :access-control-allow-origin [#".*"]
-             :access-control-allow-methods [:get :post :put :delete :options]
-             :access-control-allow-headers ["Content-Type"]))
+  (-> app-route
+      (wrap-cors :access-control-allow-origin [#".*"]
+                 :access-control-allow-methods [:get :post :put :delete :options]
+                 :access-control-allow-headers ["Content-Type"])
+      (wrap-authentication (jws-backend {:secret secret}))))
+
+
 
 (defn start []
   (jetty/run-jetty app {:port 1234, :join? false})
