@@ -10,9 +10,13 @@
                  [ring/ring-jetty-adapter "1.9.6"]
                  [metosin/reitit-ring "0.2.6"]
                  [metosin/reitit "0.5.18"]
+                 [buddy/buddy-auth "2.2.0"]
+                 [buddy/buddy-sign "3.3.0"]
                  [ring-cors "0.1.13"]
                  [http-kit "2.6.0"]]
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
   :source-paths ["src/main"]
   :main tbuck.clj.main)
+
+
