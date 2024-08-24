@@ -15,5 +15,5 @@
                  [http-kit "2.6.0"]]
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
-  :source-paths ["src"]
+  :source-paths ["src/main"]
   :main tbuck.clj.main)
