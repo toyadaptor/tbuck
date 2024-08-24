@@ -466,6 +466,7 @@
                                                                (fn [response]
                                                                    (if (= 200 (:status response))
                                                                      (do (close-divide-new-modal)
+                                                                         (action/get-main)
                                                                          (action/get-tong-inouts "main"))
                                                                      (js/alert (-> response :body :error-text))))))}
                   "저장"]
