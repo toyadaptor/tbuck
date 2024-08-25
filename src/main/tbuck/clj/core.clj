@@ -54,7 +54,6 @@
                 :from   :tong
                 :where  [:= :tid tid]}))))
 
-(tong-get "main")
 
 
 (defn tong-list []

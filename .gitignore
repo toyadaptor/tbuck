@@ -18,3 +18,4 @@ profiles.clj
 .lein-env
 node_modules/
 .shadow-cljs/
+cljs-runtime/

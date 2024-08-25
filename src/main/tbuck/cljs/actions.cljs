@@ -4,7 +4,7 @@
             [cljs-http.client :as http]
             [cljs.core.async :refer [<!]]))
 
-(def backend "http://192.168.0.200:1234")
+(def backend "http://localhost:1234")
 
 (defn get-main []
       (go (let [response (<! (http/get (str backend "/api/main")
