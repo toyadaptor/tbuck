@@ -1,7 +1,5 @@
 {:source-paths ["src/main"]
  :dependencies [[reagent "1.2.0"]
-                [cljsjs/react "17.0.2-0"]
-                [cljsjs/react-dom "17.0.2-0"]
                 [binaryage/devtools "0.9.10"]
                 [proto-repl "0.3.1"]
                 [com.andrewmcveigh/cljs-time "0.5.2"]
@@ -13,9 +11,7 @@
  :builds       {:frontend
                 {:target     :browser
                  :output-dir "resources/public/js"
-
                  :modules    {:main {:entries [tbuck.cljs.app]}}
-
                  :devtools   {:http-root "resources/public"
                               :http-port 5678}}}}
 
