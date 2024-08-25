@@ -9,9 +9,9 @@
     [reitit.ring.middleware.muuntaja :as rrm-muuntaja]
     [reitit.ring.middleware.parameters :as rrm-parameter]
     [reitit.coercion.spec]
-    [ring.util.response :as response]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cors :refer [wrap-cors]]
+    [buddy.auth :refer [authenticated?]]
     [buddy.auth.middleware :refer [wrap-authentication]]
     [buddy.auth.backends.token :refer [jws-backend]]
     [buddy.sign.jwt :as jwt]))
@@ -47,13 +47,24 @@
   (authenticate "user" "pass")
   (login {:body {:username "user" :password "pass"}}))
 
-(def app-router
+(def app-public-router
   (ring/router
     [["/api"
       ["/login" {:post {:body-params {:username string?
                                       :password string?}
-                        :handler (fn [{{:keys [username password]} :body-params}]
-                                   (login username password))}}]
+                        :handler     (fn [{{:keys [username password]} :body-params}]
+                                       (login username password))}}]]]
+    {:data {:coercion   reitit.coercion.spec/coercion
+            :muuntaja   muun/instance
+            :middleware [rrm-muuntaja/format-middleware
+                         rrm-parameter/parameters-middleware
+                         rrc/coerce-exceptions-middleware
+                         rrc/coerce-request-middleware
+                         rrc/coerce-response-middleware]}}))
+
+(def app-private-router
+  (ring/router
+    [["/api"
       ["/main" {:get {:parameters {}
                       :responses  {200 {}}
                       :handler    (fn [{:keys []}]
@@ -117,8 +128,6 @@
                               :handler    (fn [{{{:keys [dno]} :path} :parameters}]
                                             {:status 200
                                              :body   (api/bucket-divides-detail dno)})}}]]]
-
-
     {:data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muun/instance
             :middleware [rrm-muuntaja/format-middleware
@@ -126,9 +135,12 @@
                          rrc/coerce-exceptions-middleware
                          rrc/coerce-request-middleware
                          rrc/coerce-response-middleware]}}))
+
 (def app-route
   (ring/ring-handler
-    app-router
+    (ring/routes
+      app-public-router
+      app-private-router)
     (ring/routes
       (ring/create-resource-handler {:path "/"})
       (ring/create-default-handler))))
