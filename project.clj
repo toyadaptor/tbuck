@@ -1,5 +1,5 @@
 (defproject t-buck "0.1.0-SNAPSHOT"
-  :dependencies [[org.clojure/clojure "1.10.0"]
+  :dependencies [[org.clojure/clojure "1.11.0"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [org.clojure/data.json "2.5.0"]
                  [cli4clj "1.7.6"]
@@ -10,8 +10,8 @@
                  [ring/ring-jetty-adapter "1.9.6"]
                  [metosin/reitit-ring "0.2.6"]
                  [metosin/reitit "0.5.18"]
-                 [buddy/buddy-auth "2.2.0"]
-                 [buddy/buddy-sign "3.3.0"]
+                 [buddy/buddy-auth "3.0.323"]
+                 [buddy/buddy-sign "3.5.351"]
                  [ring-cors "0.1.13"]
                  [http-kit "2.6.0"]]
   :plugins [[lein-environ "1.2.0"]
