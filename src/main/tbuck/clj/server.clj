@@ -16,7 +16,7 @@
     [buddy.auth.backends.token :refer [jws-backend]]
     [buddy.core.nonce :as nonce]
     [buddy.core.codecs :as codecs]
-    [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+    [buddy.auth.middleware :refer [wrap-authentication]]
     [buddy.sign.jwt :as jwt]))
 
 
@@ -53,7 +53,17 @@
   (jws-backend {:secret secret :options {:alg :hs512}}))
 
 
+(defn wrap-authorization [handler roles]
+  (fn [request]
+    (let [user (:identity request)]
+      (if (and (authenticated? request)
+               (contains? (set roles) (keyword (:user user))))
+        (handler request)
+        {:status 403 :body {:message "Forbidden"}}))))
 
+
+(comment
+  (contains? #{:admin} :admin))
 (def app-router
   (ring/router
     [["/api"
@@ -61,11 +71,11 @@
                                       :password string?}
                         :handler     (fn [{{:keys [username password]} :body-params}]
                                        (login username password))}}]
-      ["/main" {:get {:parameters {}
-                      :responses  {200 {}}
-                      :handler    (fn []
-                                    {:status 200
-                                     :body   (api/main "main")})}}]
+      ["/main" {:get        {:parameters {}
+                             :handler    (fn [_]
+                                           {:status 200
+                                            :body   (api/main "main")})}}]
+
       ["/tong/:tid/inouts" {:get  {:parameters {:path {:tid string?}}
                                    :handler    (fn [{{{:keys [tid]} :path} :parameters}]
                                                  (clojure.pprint/pprint tid)
@@ -130,7 +140,9 @@
                          rrm-parameter/parameters-middleware
                          rrc/coerce-exceptions-middleware
                          rrc/coerce-request-middleware
-                         rrc/coerce-response-middleware]}}))
+                         rrc/coerce-response-middleware
+                         [wrap-authorization [:admin]]]}}))
+
 
 
 
@@ -149,6 +161,7 @@
                  :access-control-allow-methods [:get :post :put :delete :options]
                  :access-control-allow-headers ["Content-Type"])
       (wrap-authentication auth-backend)))
+
 
 
 (defn start []
