@@ -11,6 +11,8 @@
     [reitit.coercion.spec]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cors :refer [wrap-cors]]
+    [ring.middleware.cookies :refer [wrap-cookies]]
+    [ring.util.response :refer [set-cookie]]
     [clj-time.core :as time]
     [buddy.auth :refer [authenticated?]]
     [buddy.auth.backends.token :refer [jws-backend]]
@@ -36,9 +38,9 @@
       (let [claims {:user (keyword username)
                     :exp  (time/plus (time/now) (time/seconds 3600))}
             token (jwt/sign claims secret {:alg :hs512})]
-        {:status 200 :body {:token token}})
+        {:status  200 :body {:token token}
+         :cookies {"token" {:value token :http-only true :secure false :path "/"}}})
       {:status 400 :body {:message "wrong auth data"}})))
-
 
 
 (defn verify-token [token]
@@ -71,77 +73,82 @@
                                       :password string?}
                         :handler     (fn [{{:keys [username password]} :body-params}]
                                        (login username password))}}]
-      ["/main" {:get        {:parameters {}
-                             :handler    (fn [_]
-                                           {:status 200
-                                            :body   (api/main "main")})}}]
+      ["/private"
+       {:middleware [#_[wrap-authorization [:admin]]]}
+       ["/main" {:get {:parameters {}
+                       :handler    (fn [_]
+                                     {:status 200
+                                      :body   (api/main "main")})}}]
+       ["/tong/:tid/inouts" {:get  {:parameters {:path {:tid string?}}
+                                    :handler    (fn [{{{:keys [tid]} :path} :parameters}]
+                                                  (clojure.pprint/pprint tid)
+                                                  {:status 200
+                                                   :body   (api/tong-inouts tid)})}
+                             :post {:parameters  {:path {:tid string?}}
+                                    :body-params {:amount    int?
+                                                  :base-date string?
+                                                  :comment   string?}
+                                    :handler     (fn [{{{:keys [tid]} :path}              :parameters
+                                                       {:keys [amount base-date comment]} :body-params}]
+                                                   (api/tong-inout-new tid amount base-date comment))}}]
 
-      ["/tong/:tid/inouts" {:get  {:parameters {:path {:tid string?}}
-                                   :handler    (fn [{{{:keys [tid]} :path} :parameters}]
-                                                 (clojure.pprint/pprint tid)
-                                                 {:status 200
-                                                  :body   (api/tong-inouts tid)})}
-                            :post {:parameters  {:path {:tid string?}}
-                                   :body-params {:amount    int?
-                                                 :base-date string?
-                                                 :comment   string?}
-                                   :handler     (fn [{{{:keys [tid]} :path}              :parameters
-                                                      {:keys [amount base-date comment]} :body-params}]
-                                                  (api/tong-inout-new tid amount base-date comment))}}]
-
-      ["/buckets" {:get {:responses {200 {}}
-                         :handler   (fn [_]
-                                      (api/bucket-list "main"))}}]
-
-      ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
-                                     :responses  {200 {}}
-                                     :handler    (fn [{{{:keys [bid]} :path} :parameters}]
-                                                   {:status 200
-                                                    :body   (api/bucket-divides bid)})}}]
+       ["/buckets" {:get {:responses {200 {}}
+                          :handler   (fn [_]
+                                       (api/bucket-list "main"))}}]
 
 
-      ["/inouts/:ono" {:get    {:parameters {:path {:ono int?}}
-                                :responses  {200 {:piece {}}}
-                                :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                              (clojure.pprint/pprint ono)
+       ["/bucket/:bid/divides" {:get {:parameters {:path {:bid string?}}
+                                      :responses  {200 {}}
+                                      :handler    (fn [{{{:keys [bid]} :path} :parameters}]
+                                                    {:status 200
+                                                     :body   (api/bucket-divides bid)})}}]
+
+
+       ["/inouts/:ono" {:get    {:parameters {:path {:ono int?}}
+                                 :responses  {200 {:piece {}}}
+                                 :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                               (clojure.pprint/pprint ono)
+                                               {:status 200
+                                                :body   (api/tong-inouts-detail ono)})}
+                        :delete {:parameters {:path {:ono int?}}
+                                 :responses  {200 {:piece {}}}
+                                 :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                                               (clojure.pprint/pprint ono)
+                                               {:status 200
+                                                :body   (api/tong-inouts-removing ono)})}}]
+       ["/inout/:ono/divide-new-ready"
+        ; divide 를 위한 정보 조회
+        {:get {:parameters {:path {:ono int?}}
+               :responses  {200 {}}
+               :handler    (fn [{{{:keys [ono]} :path} :parameters}]
+                             (api/inout-info-for-divide-new ono))}}]
+
+       ["/inout/:ono/divide-new"
+        ; divide new
+        {:post {:parameters  {:path {:ono int?}}
+                :body-params {:divides map?}
+                :responses   {200 {:body map?}}
+                :handler     (fn [{{{:keys [ono]} :path} :parameters
+                                   {:keys [divides]}     :body-params}]
+                               (api/divide-new "main" ono divides))}}
+
+
+        ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
+                                :responses  {200 {}}
+                                :handler    (fn [{{{:keys [dno]} :path} :parameters}]
                                               {:status 200
-                                               :body   (api/tong-inouts-detail ono)})}
-                       :delete {:parameters {:path {:ono int?}}
-                                :responses  {200 {:piece {}}}
-                                :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                                              (clojure.pprint/pprint ono)
-                                              {:status 200
-                                               :body   (api/tong-inouts-removing ono)})}}]
-      ["/inout/:ono/divide-new-ready"
-       ; divide 를 위한 정보 조회
-       {:get {:parameters {:path {:ono int?}}
-              :responses  {200 {}}
-              :handler    (fn [{{{:keys [ono]} :path} :parameters}]
-                            (api/inout-info-for-divide-new ono))}}]
-
-      ["/inout/:ono/divide-new"
-       ; divide new
-       {:post {:parameters  {:path {:ono int?}}
-               :body-params {:divides map?}
-               :responses   {200 {:body map?}}
-               :handler     (fn [{{{:keys [ono]} :path} :parameters
-                                  {:keys [divides]}     :body-params}]
-                              (api/divide-new "main" ono divides))}}]
+                                               :body   (api/bucket-divides-detail dno)})}}]]]]]
 
 
-      ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
-                              :responses  {200 {}}
-                              :handler    (fn [{{{:keys [dno]} :path} :parameters}]
-                                            {:status 200
-                                             :body   (api/bucket-divides-detail dno)})}}]]]
     {:data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muun/instance
             :middleware [rrm-muuntaja/format-middleware
                          rrm-parameter/parameters-middleware
                          rrc/coerce-exceptions-middleware
                          rrc/coerce-request-middleware
-                         rrc/coerce-response-middleware
-                         [wrap-authorization [:admin]]]}}))
+                         rrc/coerce-response-middleware]}}))
+
+
 
 
 
@@ -160,6 +167,7 @@
       (wrap-cors :access-control-allow-origin [#".*"]
                  :access-control-allow-methods [:get :post :put :delete :options]
                  :access-control-allow-headers ["Content-Type"])
+      (wrap-cookies)
       (wrap-authentication auth-backend)))
 
 
