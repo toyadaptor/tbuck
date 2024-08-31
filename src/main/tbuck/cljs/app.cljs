@@ -70,6 +70,85 @@
           (apply js/console.log params)))
 
 
+
+(def account-component
+  (reagent/create-class
+    {:display-name   "account"
+     :reagent-render (fn []
+                         [:div
+                          [:div.columns
+                           [:div.column
+                            [:span.is-pulled-left.title "Account"]
+                            [:span.is-pulled-right
+                             [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]]
+                          [:div.columns
+                           [:div.column
+                            [:div.columns.mt-5
+                             [:div.column
+                              [:span.is-pulled-left.is-italic (or (:tong-name @s-main) "no account")]
+                              [:span.is-pulled-right.has-text-weight-bold.is-size-3 (:tong-amount @s-main)]]]
+
+                            [:div.columns.mt-5
+                             [:div.column
+                              [:div.field.is-grouped.is-pulled-left
+                               [:div.control
+                                [:a.button.is-small {:href (rfe/href ::tong {:tid "main"})}
+                                 [:span.icon-text
+                                  [:span.icon [:i.fas.fa-history]]]]]
+                               [:div.control
+                                [:a.button.is-small
+                                 {:on-click #(open-inout-new-modal)}
+                                 [:span.icon-text
+                                  [:span.icon [:i.fas.fa-plus]]]]]]
+                              [:span.is-pulled-right.has-text-weight-bold (str "마지막 입출금 " (:last-inout @s-main))]]]
+                            #_[:div.columns.mt-5
+                               [:div.column
+                                [:span.is-pulled-left.is-italic "buckets 합계 일치 여부"]
+                                [:span.is-pulled-right.has-text-weight-bold (if (:is-valid-sum @s-main)
+                                                                              "정상" "확인 필요")]]]]]
+
+                          ;; inout new
+                          [:div.modal {:id "inout-new-modal" :class (if @is-inout-new-modal "is-active" "")}
+                           [:div.modal-background]
+                           [:div.modal-card
+                            [:header.modal-card-head
+                             [:p.modal-card-title "입출금 추가"]
+                             [:button.delete {:aria-label "close"
+                                              :on-click   #(reset! is-inout-new-modal false)}]]
+                            [:section.modal-card-body
+                             [:div.columns
+                              [:div.column
+                               [:p.title.is-4 ""]
+                               [:div.field
+                                [:label.label "금액"]
+                                [:div.control
+                                 [:input.input {:type         "tel"
+                                                :value        (:amount @input-inout-new)
+                                                :place-holder "0 이면 버켓 리밸런싱"
+                                                :on-change    #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
+
+                               [:div.field
+                                [:label.label "날짜"]
+                                [:div.control
+                                 [:input.input {:type      "tel"
+                                                :value     (:base-date @input-inout-new)
+                                                :on-change #(swap! input-inout-new assoc :base-date (-> % .-target .-value))}]]]
+
+                               [:div.field
+                                [:label.label "메모"]
+                                [:div.control
+                                 [:input.input {:type      "text"
+                                                :value     (:comment @input-inout-new)
+                                                :on-change #(swap! input-inout-new assoc :comment (-> % .-target .-value))}]]]]]]
+
+                            [:footer.modal-card-foot
+                             [:div.buttons
+                              [:button.button.is-info
+                               {:on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
+                              [:button.button
+                               {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]])}))
+
+
 (defn bucket-page [match]
       (let [{:keys [path]} (:parameters match)]
            (reagent/create-class
@@ -79,6 +158,7 @@
                                        (action/get-bucket-divides (:bid path)))
               :reagent-render      (fn []
                                        [:div
+                                        [account-component]
                                         [:div.columns
                                          [:div.column
                                           [:p.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
@@ -139,6 +219,8 @@
 
               :reagent-render      (fn []
                                        [:div
+                                        [account-component]
+
                                         [:div.columns
                                          [:div.column.table-container
                                           [:p.is-pulled-left.title "입출금 이력"]]]
@@ -185,14 +267,101 @@
                                                                           (js/console.log "ok"))}
 
                                                         [:span.icon-text
-                                                         [:span.icon [:i.fas.fa-trash]]]]]])]])]]]]])})))
+                                                         [:span.icon [:i.fas.fa-trash]]]]]])]])]]]]
+                                        ;; divide new
+                                        (when @is-divide-new-modal
+                                              [:div.modal {:id "inout-new-modal" :class (if @is-divide-new-modal "is-active" "")}
+                                               [:div.modal-background]
+                                               [:div.modal-card
+                                                [:header.modal-card-head
+                                                 [:p.modal-card-title "버켓 분배"]
+                                                 [:button.delete {:aria-label "close"
+                                                                  :on-click   #(reset! is-divide-new-modal false)}]]
+                                                [:section.modal-card-body
+                                                 [:div.columns
+                                                  [:div.column
+                                                   [:p.title.is-4 "입출금 정보"]
+
+                                                   [:div.field.is-horizontal
+                                                    [:div.field-label.is-normal
+                                                     [:label.label "날짜"]]
+                                                    [:div.field-body
+                                                     [:div.field
+                                                      [:div.control
+                                                       [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :base-date)}]]]]]
+
+                                                   [:div.field.is-horizontal
+                                                    [:div.field-label.is-normal
+                                                     [:label.label "amount"]]
+                                                    [:div.field-body
+                                                     [:div.field
+                                                      [:div.control
+                                                       [:input.input {:disabled "disabled" :value (.toLocaleString (-> @s-divide-new-ready :inout :amount))}]]]]]
+
+                                                   [:div.field.is-horizontal
+                                                    [:div.field-label.is-normal
+                                                     [:label.label "comment"]]
+                                                    [:div.field-body
+                                                     [:div.field
+                                                      [:div.control
+                                                       [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :comment)}]]]]]
+
+                                                   [:hr]
+
+                                                   [:p.title.is-4 "버켓 분배 정보"]
+
+                                                   [:div.field.is-horizontal
+                                                    [:div.field-label.is-normal
+                                                     [:label.label.is-size-3 "남음"]]
+                                                    [:div.field-body
+                                                     [:div.field
+                                                      [:div.control
+                                                       [:p.is-size-3 (.toLocaleString @input-divide-new-remain)]]]]]
+
+
+                                                   [:div
+                                                    (for [[k bucket] @input-divide-new-buckets]
+                                                         ^{:key k}
+
+                                                         [:div.field.is-horizontal
+                                                          [:div.field-label.is-normal
+                                                           [:div.control
+                                                            [:label.label (:bucket-name bucket)]]]
+
+                                                          [:div.field-body
+                                                           [:div.field
+                                                            [:div.control
+                                                             [:input.input {:type     "tel"
+                                                                            :disabled "disabled"
+                                                                            :style    {:text-align "right"}
+                                                                            :value    (.toLocaleString (:amount bucket))}]]]
+
+                                                           [:div.field
+                                                            [:div.control
+                                                             [:input.input {:type      "tel"
+                                                                            :value     (:val bucket)
+                                                                            :style     {:text-align "right"}
+                                                                            :on-change #(swap! input-divide-new-buckets assoc-in [k :val] (-> % .-target .-value))}]]]]])]]]]
 
 
 
+                                                [:footer.modal-card-foot
+                                                 [:div.buttons
+                                                  [:button.button.is-info
+                                                   {:disabled (if @input-divide-new-sum-check "" "disabled")
+                                                    :on-click #(do (action/create-bucket-divide (-> @s-divide-new-ready :inout :ono)
+                                                                                                @input-divide-new-buckets
+                                                                                                (fn [response]
+                                                                                                    (if (= 200 (:status response))
+                                                                                                      (do (close-divide-new-modal)
+                                                                                                          (action/get-main)
+                                                                                                          (action/get-tong-inouts "main"))
+                                                                                                      (js/alert (-> response :body :error-text))))))}
+                                                   "저장"]
 
 
-
-
+                                                  [:button.button
+                                                   {:on-click #(close-divide-new-modal)} "닫기"]]]]])])})))
 
 
 
@@ -205,6 +374,8 @@
 
          :reagent-render      (fn []
                                   [:div
+                                   [account-component]
+
                                    [:p.title "Buckets"]
                                    [:ul.mt-5
                                     (for [bucket (:buckets @s-main)]
@@ -220,9 +391,22 @@
 
 
 
+
+(defn login-component []
+      (reagent/create-class
+        {:display-name        "main"
+         :component-did-mount (fn [])
+         :reagent-render      (fn []
+                                  [:div
+                                   [:p.title "Login"]])}))
+
+
+
 (def routes
   [["/main" {:name ::main
              :view main-component}]
+   ["/login" {:name ::login
+              :view login-component}]
    ["/tong/:tid" {:name       ::tong
                   :parameters {:path {:tid string?}}
                   :view       tong-page}]
@@ -230,10 +414,8 @@
                     :parameters {:path {:bid string?}}
                     :view       bucket-page}]])
 
-
 (defn page-template []
       [:div.container.p-3
-
        [:header
         [:div.columns
          [:div.column.is-one-fifth
@@ -241,42 +423,6 @@
            #_[:p.title "T-BUCK"]
            [:figure.image
             [:img {:src "assets/roomel_coffee.jpg"}]]]]]]
-
-       [:div.columns
-        [:div.column
-         [:span.is-pulled-left.title "Account"]
-         [:span.is-pulled-right
-          [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]]
-
-
-       [:div.columns
-        [:div.column
-         [:div.columns.mt-5
-          [:div.column
-           [:span.is-pulled-left.is-italic (or (:tong-name @s-main) "no account")]
-           [:span.is-pulled-right.has-text-weight-bold.is-size-3 (:tong-amount @s-main)]]]
-
-         [:div.columns.mt-5
-          [:div.column
-           [:div.field.is-grouped.is-pulled-left
-            [:div.control
-             [:a.button.is-small {:href (rfe/href ::tong {:tid "main"})}
-              [:span.icon-text
-               [:span.icon [:i.fas.fa-history]]]]]
-            [:div.control
-             [:a.button.is-small
-              {:on-click #(open-inout-new-modal)}
-              [:span.icon-text
-               [:span.icon [:i.fas.fa-plus]]]]]]
-           [:span.is-pulled-right.has-text-weight-bold (str "마지막 입출금 " (:last-inout @s-main))]]]
-
-
-
-         #_[:div.columns.mt-5
-            [:div.column
-             [:span.is-pulled-left.is-italic "buckets 합계 일치 여부"]
-             [:span.is-pulled-right.has-text-weight-bold (if (:is-valid-sum @s-main)
-                                                           "정상" "확인 필요")]]]]]
 
        [:div.columns
         [:div.column
@@ -292,48 +438,8 @@
              [:span "Mel family"]]]]
 
 
-       ; inout new
-       [:div.modal {:id "inout-new-modal" :class (if @is-inout-new-modal "is-active" "")}
-        [:div.modal-background]
-        [:div.modal-card
-         [:header.modal-card-head
-          [:p.modal-card-title "입출금 추가"]
-          [:button.delete {:aria-label "close"
-                           :on-click   #(reset! is-inout-new-modal false)}]]
-         [:section.modal-card-body
-          [:div.columns
-           [:div.column
-            [:p.title.is-4 ""]
-            [:div.field
-             [:label.label "금액"]
-             [:div.control
-              [:input.input {:type         "tel"
-                             :value        (:amount @input-inout-new)
-                             :place-holder "0 이면 버켓 리밸런싱"
-                             :on-change    #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
 
-            [:div.field
-             [:label.label "날짜"]
-             [:div.control
-              [:input.input {:type      "tel"
-                             :value     (:base-date @input-inout-new)
-                             :on-change #(swap! input-inout-new assoc :base-date (-> % .-target .-value))}]]]
-
-            [:div.field
-             [:label.label "메모"]
-             [:div.control
-              [:input.input {:type      "text"
-                             :value     (:comment @input-inout-new)
-                             :on-change #(swap! input-inout-new assoc :comment (-> % .-target .-value))}]]]]]]
-
-         [:footer.modal-card-foot
-          [:div.buttons
-           [:button.button.is-info
-            {:on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
-           [:button.button
-            {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]
-
-
+       ;; common modal
        [:div.modal {:id "ono-modal" :class (if @is-inout-divides-modal "is-active" "")}
         [:div.modal-background]
         [:div.modal-card
@@ -377,103 +483,11 @@
          [:footer.modal-card-foot
           [:div.buttons
            [:button.button.is-fullwidth
-            {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]
+            {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]])
 
 
        ; divide new
-       (when @is-divide-new-modal
-             [:div.modal {:id "inout-new-modal" :class (if @is-divide-new-modal "is-active" "")}
-              [:div.modal-background]
-              [:div.modal-card
-               [:header.modal-card-head
-                [:p.modal-card-title "버켓 분배"]
-                [:button.delete {:aria-label "close"
-                                 :on-click   #(reset! is-divide-new-modal false)}]]
-               [:section.modal-card-body
-                [:div.columns
-                 [:div.column
-                  [:p.title.is-4 "입출금 정보"]
 
-                  [:div.field.is-horizontal
-                   [:div.field-label.is-normal
-                    [:label.label "날짜"]]
-                   [:div.field-body
-                    [:div.field
-                     [:div.control
-                      [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :base-date)}]]]]]
-
-                  [:div.field.is-horizontal
-                   [:div.field-label.is-normal
-                    [:label.label "amount"]]
-                   [:div.field-body
-                    [:div.field
-                     [:div.control
-                      [:input.input {:disabled "disabled" :value (.toLocaleString (-> @s-divide-new-ready :inout :amount))}]]]]]
-
-                  [:div.field.is-horizontal
-                   [:div.field-label.is-normal
-                    [:label.label "comment"]]
-                   [:div.field-body
-                    [:div.field
-                     [:div.control
-                      [:input.input {:disabled "disabled" :value (-> @s-divide-new-ready :inout :comment)}]]]]]
-
-                  [:hr]
-
-                  [:p.title.is-4 "버켓 분배 정보"]
-
-                  [:div.field.is-horizontal
-                   [:div.field-label.is-normal
-                    [:label.label.is-size-3 "남음"]]
-                   [:div.field-body
-                    [:div.field
-                     [:div.control
-                      [:p.is-size-3 (.toLocaleString @input-divide-new-remain)]]]]]
-
-
-                  [:div
-                   (for [[k bucket] @input-divide-new-buckets]
-                        ^{:key k}
-
-                        [:div.field.is-horizontal
-                         [:div.field-label.is-normal
-                          [:div.control
-                           [:label.label (:bucket-name bucket)]]]
-
-                         [:div.field-body
-                          [:div.field
-                           [:div.control
-                            [:input.input {:type     "tel"
-                                           :disabled "disabled"
-                                           :style    {:text-align "right"}
-                                           :value    (.toLocaleString (:amount bucket))}]]]
-
-                          [:div.field
-                           [:div.control
-                            [:input.input {:type      "tel"
-                                           :value     (:val bucket)
-                                           :style     {:text-align "right"}
-                                           :on-change #(swap! input-divide-new-buckets assoc-in [k :val] (-> % .-target .-value))}]]]]])]]]]
-
-
-
-               [:footer.modal-card-foot
-                [:div.buttons
-                 [:button.button.is-info
-                  {:disabled (if @input-divide-new-sum-check "" "disabled")
-                   :on-click #(do (action/create-bucket-divide (-> @s-divide-new-ready :inout :ono)
-                                                               @input-divide-new-buckets
-                                                               (fn [response]
-                                                                   (if (= 200 (:status response))
-                                                                     (do (close-divide-new-modal)
-                                                                         (action/get-main)
-                                                                         (action/get-tong-inouts "main"))
-                                                                     (js/alert (-> response :body :error-text))))))}
-                  "저장"]
-
-
-                 [:button.button
-                  {:on-click #(close-divide-new-modal)} "닫기"]]]]])])
 
 
 
