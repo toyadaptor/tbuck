@@ -1,10 +1,29 @@
 (ns tbuck.clj.api
-  (:require [tbuck.clj.core :as core]))
+  (:require [tbuck.clj.core :as core]
+            [tbuck.clj.auth :as auth]
+            [clj-time.core :as time]
+            [buddy.sign.jwt :as jwt]))
 
 (defn convert-keys [m]
   (clojure.set/rename-keys m {:bucket_name :bucket-name
                               :base_date   :base-date}))
 
+
+(defn login [username password]
+  (let [valid? (some-> auth/auth-data
+                       (get (keyword username))
+                       (= password))]
+    (if valid?
+      (let [claims {:user (keyword username)
+                    :exp  (time/plus (time/now) (time/seconds 3600))}
+            token (jwt/sign claims auth/secret {:alg :hs512})]
+        {:status  200 :body {:token token}
+         :cookies {"token" {:value     token
+                            :http-only true
+                            :secure    false
+                            :path      "/"}}})
+
+      {:status 400 :body {:error-text "nop!"}})))
 
 (defn main [tid]
   (let [tong (core/tong-get tid)
@@ -101,7 +120,7 @@
                                                         :base_date (:base_date inout)}))
                                         (mapv #(clojure.set/rename-keys % {:val :amount}))))
           (throw (Exception. "not same!")))))
-    {:status 200 :body   {}}
+    {:status 200 :body {}}
 
     (catch Exception e
       {:status 500

@@ -6,7 +6,7 @@
             [reagent.core :refer [atom]]
             [tbuck.cljs.util :refer [add-comma]]))
 
-
+(defonce s-login (atom false))
 (defonce s-main (atom {}))
 (defonce s-tong-inouts (atom {}))
 
@@ -21,8 +21,8 @@
 
 
 
-
-
+(defn set-login [flag]
+      (reset! s-login flag))
 
 
 (defn set-main [{:keys [tong-name tong-amount is-valid-sum last-inout buckets]}]

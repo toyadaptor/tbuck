@@ -5,9 +5,9 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides s-buckets s-divide-new-ready]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides s-buckets s-divide-new-ready s-login]]
             [tbuck.cljs.actions :as action]
-            [tbuck.cljs.util :refer [today-in-yyyymmdd]]))
+            [tbuck.cljs.util :refer [today-in-yyyymmdd get-auth-cookie]]))
 
 (defonce match (reagent/atom nil))
 
@@ -25,6 +25,8 @@
 (defonce input-divide-new-remain (reagent/atom 0))
 (defonce input-divide-new-sum-check (reagent/atom false))
 
+(defonce input-login (reagent/atom {}))
+
 (defn calculate-sum [data]
       (- (js/parseInt (-> @s-divide-new-ready :inout :amount))
          (reduce + (map (comp js/parseInt :val) (vals data)))))
@@ -36,9 +38,6 @@
 (add-watch input-divide-new-remain :update-sum-check
            (fn [_ _ _ new-state]
                (reset! input-divide-new-sum-check (= new-state 0))))
-
-
-
 
 
 
@@ -78,9 +77,14 @@
                          [:div
                           [:div.columns
                            [:div.column
+                            [:a.is-pulled-right {:on-click #(action/do-logout (fn []
+                                                                                  (rfe/push-state ::login)))} "logout"]]]
+                          [:div.columns.mt-5
+                           [:div.column
                             [:span.is-pulled-left.title "Account"]
                             [:span.is-pulled-right
                              [:a.is-pulled-right {:href (rfe/href ::main)} "메인으로"]]]]
+
                           [:div.columns
                            [:div.column
                             [:div.columns.mt-5
@@ -146,7 +150,9 @@
                               [:button.button.is-info
                                {:on-click #(do (action/create-tong-inout "main" @input-inout-new close-inout-new-modal))} "저장"]
                               [:button.button
-                               {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]])}))
+                               {:on-click #(reset! is-inout-new-modal false)} "닫기"]]]]]
+
+                          [:br]])}))
 
 
 (defn bucket-page [match]
@@ -159,6 +165,7 @@
               :reagent-render      (fn []
                                        [:div
                                         [account-component]
+
                                         [:div.columns
                                          [:div.column
                                           [:p.title.is-4 (str "Buckets > " (:bucket-name (:bucket @s-bucket-divides)))]]]
@@ -398,7 +405,51 @@
          :component-did-mount (fn [])
          :reagent-render      (fn []
                                   [:div
-                                   [:p.title "Login"]])}))
+                                   [:p.title "Login"]
+
+                                   [:div.columns
+                                    [:div.column
+                                     [:div.field.is-horizontal
+                                      [:div.field-label.is-normal
+                                       [:label.label "username"]]
+                                      [:div.field-body
+                                       [:div.field
+                                        [:div.control
+                                         [:input.input
+                                          {:on-change #(swap! input-login assoc :username (-> % .-target .-value))}]]]]]
+                                     [:div.field.is-horizontal
+                                      [:div.field-label.is-normal
+                                       [:label.label "password"]]
+                                      [:div.field-body
+                                       [:div.field
+                                        [:div.control
+                                         [:input.input
+                                          {:type      "password"
+                                           :on-change #(swap! input-login assoc :password (-> % .-target .-value))}]]]]]]
+
+
+                                    [:div.column
+                                     [:button.button.is-fullwidth.is-info
+                                      {:on-click #(action/do-login (:username @input-login)
+                                                                   (:password @input-login)
+                                                                   (fn [response]
+                                                                       (if (= 200 (:status response))
+
+                                                                         (do
+                                                                           (js/console.log "ok")
+                                                                           (rfe/push-state ::main))
+
+
+                                                                         (js/alert (-> response :body :error-text)))))} "submit"]]]])}))
+
+
+
+
+
+
+
+
+
 
 
 
@@ -419,18 +470,21 @@
        [:header
         [:div.columns
          [:div.column.is-one-fifth
-          [:header.mb-5
-           #_[:p.title "T-BUCK"]
+          [:header
+           ;[:p.title "TBUCK"]
            [:figure.image
             [:img {:src "assets/roomel_coffee.jpg"}]]]]]]
 
        [:div.columns
         [:div.column
          [:section.section.pl-3.pr-3
-          (if @match
-            (let [view (:view (:data @match))]
-                 [view @match])
-            [main-component])]]]
+          (if @s-login
+            (if @match
+              (let [view (:view (:data @match))]
+                   [view @match])
+              [main-component])
+            [login-component])]]]
+
 
        [:footer
         [:p [:span.icon-text
@@ -486,7 +540,7 @@
             {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]])
 
 
-       ; divide new
+; divide new
 
 
 

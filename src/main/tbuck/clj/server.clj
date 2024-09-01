@@ -1,7 +1,7 @@
 (ns tbuck.clj.server
   (:require
     [clojure.data.json :as json]
-    [reitit.core :as reitit]
+    [tbuck.clj.auth :as auth]
     [tbuck.clj.api :as api]
     [muuntaja.core :as muun]
     [reitit.ring :as ring]
@@ -11,70 +11,32 @@
     [reitit.coercion.spec]
     [ring.adapter.jetty :as jetty]
     [ring.middleware.cors :refer [wrap-cors]]
-    [ring.middleware.cookies :refer [wrap-cookies]]
-    [ring.util.response :refer [set-cookie]]
-    [clj-time.core :as time]
-    [buddy.auth :refer [authenticated?]]
-    [buddy.auth.backends.token :refer [jws-backend]]
-    [buddy.core.nonce :as nonce]
-    [buddy.core.codecs :as codecs]
-    [buddy.auth.middleware :refer [wrap-authentication]]
-    [buddy.sign.jwt :as jwt]))
+    [ring.middleware.cookies :refer [wrap-cookies]]))
 
 
-(def secret "hehe")
-(def auth-data {:admin "secret"})
-
-(defn random-token
-  []
-  (let [randomdata (nonce/random-bytes 16)]
-    (codecs/bytes->hex randomdata)))
-
-(defn login [username password]
-  (let [valid? (some-> auth-data
-                       (get (keyword username))
-                       (= password))]
-    (if valid?
-      (let [claims {:user (keyword username)
-                    :exp  (time/plus (time/now) (time/seconds 3600))}
-            token (jwt/sign claims secret {:alg :hs512})]
-        {:status  200 :body {:token token}
-         :cookies {"token" {:value token :http-only true :secure false :path "/"}}})
-      {:status 400 :body {:message "wrong auth data"}})))
 
 
-(defn verify-token [token]
-  (try
-    (println "verify token - " token)
-    (get (jwt/unsign token secret {:alg :hs512}) :user)
-    (catch Exception e
-      nil)))                                                ;; 검증 실패 시 nil 반환
 
 
-(def auth-backend
-  (jws-backend {:secret secret :options {:alg :hs512}}))
 
 
-(defn wrap-authorization [handler roles]
-  (fn [request]
-    (let [user (:identity request)]
-      (if (and (authenticated? request)
-               (contains? (set roles) (keyword (:user user))))
-        (handler request)
-        {:status 403 :body {:message "Forbidden"}}))))
 
-
-(comment
-  (contains? #{:admin} :admin))
 (def app-router
   (ring/router
     [["/api"
       ["/login" {:post {:body-params {:username string?
                                       :password string?}
                         :handler     (fn [{{:keys [username password]} :body-params}]
-                                       (login username password))}}]
+                                       (api/login username password))}}]
+
+
       ["/private"
-       {:middleware [#_[wrap-authorization [:admin]]]}
+       {:middleware [[auth/wrap-role-authorization [:admin]]]}
+       ["/logout" {:post {:handler (fn [_]
+                                     {:status  200
+                                      :cookies {"token" {:value "" :max-age 0 :path "/"}}})}}]
+
+
        ["/main" {:get {:parameters {}
                        :handler    (fn [_]
                                      {:status 200
@@ -142,14 +104,14 @@
 
     {:data {:coercion   reitit.coercion.spec/coercion
             :muuntaja   muun/instance
-            :middleware [rrm-muuntaja/format-middleware
+            :middleware [wrap-cookies
+                         auth/wrap-jwt-cookie-auth
+                         auth/wrap-jwt-authentication
+                         rrm-muuntaja/format-middleware
                          rrm-parameter/parameters-middleware
                          rrc/coerce-exceptions-middleware
                          rrc/coerce-request-middleware
                          rrc/coerce-response-middleware]}}))
-
-
-
 
 
 
@@ -161,15 +123,12 @@
     (ring/create-default-handler)))
 
 
-
 (def app
   (-> app-route
       (wrap-cors :access-control-allow-origin [#".*"]
                  :access-control-allow-methods [:get :post :put :delete :options]
-                 :access-control-allow-headers ["Content-Type"])
-      (wrap-cookies)
-      (wrap-authentication auth-backend)))
-
+                 :access-control-allow-headers ["Content-Type" "Authorization"]
+                 :access-control-allow-credentials "true")))
 
 
 (defn start []
@@ -177,7 +136,9 @@
   (println "start!"))
 
 (comment
+
   (reitit.core/routes app-router)
+  (reitit.core/match-by-path app-router "/api/login")
   (app-route {:uri            "/api/inout/51/divide-new"
               :request-method :post
               :headers        {"Content-Type" "application/json"}})

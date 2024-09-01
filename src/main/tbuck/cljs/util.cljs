@@ -26,3 +26,17 @@
       (let [today (time/today)
             formatter (timef/formatter "yyyyMMdd")]
            (timef/unparse formatter today)))
+
+
+(defn get-auth-cookie []
+      (let [cookies (js/document.cookie.split "; ")]
+           (some (fn [cookie]
+                     (js/console.log cookie)
+                     (let [[k v] (clojure.string/split cookie #"=")]
+                          (when (= k "login")
+                                v)))
+                 cookies)))
+
+
+
+
