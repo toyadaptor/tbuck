@@ -2,4 +2,6 @@
              :db-name ""
              :db-user ""
              :db-password ""
-             :db-port ""}}}
+             :db-port ""
+             :auth-secret ""
+             :auth-password ""}}}
