@@ -1,4 +1,4 @@
-{:source-paths ["src/main"]
+{:source-paths ["src"]
  :dependencies [[reagent "1.2.0"]
                 [binaryage/devtools "0.9.10"]
                 [proto-repl "0.3.1"]

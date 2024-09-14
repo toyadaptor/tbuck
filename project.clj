@@ -17,9 +17,9 @@
                  [clj-time "0.15.2"]]
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
-  :source-paths ["src/main"]
+  :source-paths ["src"]
   :main tbuck.clj.main
-  :uberjar {:source-paths ["src/main"]
-            :main tbuck.clj.main})
+  :aot [tbuck.clj.main])
+
 
 

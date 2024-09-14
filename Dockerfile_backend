@@ -12,6 +12,6 @@ ARG DOCKER_TAG
 ENV APP_VERSION=$DOCKER_TAG
 RUN echo "Building Docker image version: $APP_VERSION"
 
-COPY --from=build-jar "/tbuck/target/*.jar" ./
+COPY --from=build-jar /tbuck/target/tbuck-0.1.0-SNAPSHOT-standalone.jar /tbuck
 
-ENTRYPOINT ["java", "-jar", "/tbuck/t-buck-0.1.0-SNAPSHOT-standalone.jar"]
+ENTRYPOINT ["java", "-jar", "/tbuck/tbuck-0.1.0-SNAPSHOT-standalone.jar"]

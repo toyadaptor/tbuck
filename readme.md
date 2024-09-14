@@ -1,9 +1,3 @@
-select * from "inout" order by ono desc;
+# frontend
 
-;
-ALTER SEQUENCE "tong_io_id_seq" RESTART WITH 338;
-
-select * from "divide" order by dno desc;
-;
-
-ALTER SEQUENCE "divide_id_seq" RESTART WITH 491;
+npx shadow-cljs watch frontend
