@@ -425,9 +425,9 @@
                                         [:div.control
                                          [:input.input
                                           {:type      "password"
-                                           :on-change #(swap! input-login assoc :password (-> % .-target .-value))}]]]]]]
+                                           :on-change #(swap! input-login assoc :password (-> % .-target .-value))}]]]]]]]
 
-
+                                   [:div.columns
                                     [:div.column
                                      [:button.button.is-fullwidth.is-info
                                       {:on-click #(action/do-login (:username @input-login)
@@ -441,6 +441,11 @@
 
 
                                                                          (js/alert (-> response :body :error-text)))))} "submit"]]]])}))
+
+
+
+
+
 
 
 
@@ -538,19 +543,6 @@
           [:div.buttons
            [:button.button.is-fullwidth
             {:on-click #(reset! is-inout-divides-modal false)} "닫기"]]]]]])
-
-
-; divide new
-
-
-
-
-
-
-
-
-
-
 
 
 (defn ^:dev/after-load start []
