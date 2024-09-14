@@ -1,0 +1,17 @@
+FROM amd64/clojure:openjdk-17-lein-buster AS build-jar
+WORKDIR /tbuck
+
+COPY . .
+RUN lein deps
+RUN lein uberjar
+
+FROM amd64/amazoncorretto:17-alpine
+WORKDIR /tbuck
+
+ARG DOCKER_TAG
+ENV APP_VERSION=$DOCKER_TAG
+RUN echo "Building Docker image version: $APP_VERSION"
+
+COPY --from=build-jar "/tbuck/target/*.jar" ./
+
+ENTRYPOINT ["java", "-jar", "/tbuck/t-buck-0.1.0-SNAPSHOT-standalone.jar"]

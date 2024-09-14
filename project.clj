@@ -1,4 +1,4 @@
-(defproject t-buck "0.1.0-SNAPSHOT"
+(defproject tbuck "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.11.0"]
                  [org.clojure/java.jdbc "0.7.11"]
                  [org.clojure/data.json "2.5.0"]
@@ -18,6 +18,8 @@
   :plugins [[lein-environ "1.2.0"]
             [lein-pprint "1.3.2"]]
   :source-paths ["src/main"]
-  :main tbuck.clj.main)
+  :main tbuck.clj.main
+  :uberjar {:source-paths ["src/main"]
+            :main tbuck.clj.main})
 
 
