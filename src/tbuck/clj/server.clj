@@ -132,7 +132,7 @@
 
 
 (defn start []
-  (jetty/run-jetty app {:port 1234, :join? false})
+  (jetty/run-jetty app {:port 8000, :join? false})
   (println "start!"))
 
 (comment

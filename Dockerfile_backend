@@ -14,4 +14,6 @@ RUN echo "Building Docker image version: $APP_VERSION"
 
 COPY --from=build-jar /tbuck/target/tbuck-0.1.0-SNAPSHOT-standalone.jar /tbuck
 
+EXPOSE 8000
+
 ENTRYPOINT ["java", "-jar", "/tbuck/tbuck-0.1.0-SNAPSHOT-standalone.jar"]

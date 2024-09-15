@@ -18,7 +18,5 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 COPY --from=build-stage /app/resources/public /usr/share/nginx/html
 
-EXPOSE 8001
-
 # NGINX 실행
 CMD ["nginx", "-g", "daemon off;"]
