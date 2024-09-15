@@ -13,5 +13,5 @@
                  :output-dir "resources/public/js"
                  :modules    {:main {:entries [tbuck.cljs.app]}}
                  :devtools   {:http-root "resources/public"
-                              :http-port 5678}}}}
+                              :http-port 8001}}}}
 
