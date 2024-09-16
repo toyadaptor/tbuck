@@ -5,6 +5,7 @@
             [cljs.core.async :refer [<!]]))
 
 (def backend "http://211.37.173.173")
+;(def backend "http://localhost:8000")
 
 (defn get-main []
       (go (let [response (<! (http/get (str backend "/api/private/main")
@@ -76,6 +77,9 @@
 
 
 (defn create-bucket-divide [ono divides callback]
+      (js/alert ono)
+      (js/alert divides)
+
       (go (let [response (<! (http/post (str backend "/api/private/inout/" ono "/divide-new")
                                         {:with-credentials? true
                                          :json-params       {:divides divides}}))]

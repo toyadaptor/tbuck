@@ -15,12 +15,6 @@
 
 
 
-
-
-
-
-
-
 (def app-router
   (ring/router
     [["/api"
@@ -87,19 +81,18 @@
 
        ["/inout/:ono/divide-new"
         ; divide new
-        {:post {:parameters  {:path {:ono int?}}
-                :body-params {:divides map?}
-                :responses   {200 {:body map?}}
-                :handler     (fn [{{{:keys [ono]} :path} :parameters
-                                   {:keys [divides]}     :body-params}]
-                               (api/divide-new "main" ono divides))}}
+        {:post {:parameters {:path {:ono int?}}
+                ;:body-params {:divides map?}
+                :responses  {200 {:body map?}}
+                :handler    (fn [{{{:keys [ono]} :path} :parameters
+                                  {:keys [divides]}     :body-params}]
+                              (api/divide-new "main" ono divides))}}]
 
-
-        ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
-                                :responses  {200 {}}
-                                :handler    (fn [{{{:keys [dno]} :path} :parameters}]
-                                              {:status 200
-                                               :body   (api/bucket-divides-detail dno)})}}]]]]]
+       ["/divides/:dno" {:get {:parameters {:path {:dno int?}}
+                               :responses  {200 {}}
+                               :handler    (fn [{{{:keys [dno]} :path} :parameters}]
+                                             {:status 200
+                                              :body   (api/bucket-divides-detail dno)})}}]]]]
 
 
     {:data {:coercion   reitit.coercion.spec/coercion

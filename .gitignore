@@ -19,3 +19,4 @@ profiles.clj
 node_modules/
 .shadow-cljs/
 cljs-runtime/
+resources/public/js/
