@@ -8,10 +8,20 @@
                 [fipp "0.6.24"]
                 [cheshire "5.13.0"]]
 
- :builds       {:frontend
-                {:target     :browser
-                 :output-dir "resources/public/js"
-                 :modules    {:main {:entries [tbuck.cljs.app]}}
-                 :devtools   {:http-root "resources/public"
-                              :http-port 8001}}}}
+ :builds
+ {:dev
+  {:target          :browser
+   :output-dir      "resources/public/js"
+   :modules         {:main {:entries [tbuck.cljs.app]}}
+   :devtools        {:http-root "resources/public"
+                     :http-port 8001}
+   :closure-defines {tbuck.cljs.actions/backend-url "http://localhost:8000"}}
+  :prod
+  {:target          :browser
+   :output-dir      "resources/public/js"
+   :modules         {:main {:entries [tbuck.cljs.app]}}
+   :devtools        {:http-root "resources/public"
+                     :http-port 8001}
+   :closure-defines {tbuck.cljs.actions/backend-url "https://211.37.173.173"}}}}
+
 

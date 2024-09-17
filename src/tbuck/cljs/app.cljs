@@ -338,7 +338,7 @@
                                                           [:div.field-body
                                                            [:div.field
                                                             [:div.control
-                                                             [:input.input {:type     "tel"
+                                                             [:input.input {:type     "number"
                                                                             :disabled "disabled"
                                                                             :style    {:text-align "right"}
                                                                             :value    (.toLocaleString (:amount bucket))}]]]

@@ -8,7 +8,7 @@ COPY . .
 
 RUN npm install
 RUN npm list --depth=0
-RUN npx shadow-cljs release frontend
+RUN npx shadow-cljs release prod
 
 
 
