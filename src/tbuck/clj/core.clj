@@ -3,9 +3,7 @@
   (:require
     [clojure.java.jdbc :as j]
     [environ.core :refer [env]]
-    ;[honeysql.core :as sql]
     [honey.sql :as sql]
-    ;[honeysql.helpers :refer :all :as helpers]
     [clojure.string :as str]
     [clojure.edn :as edn]))
 
@@ -261,41 +259,6 @@
 
 
 
-;(defn terminal-divide-new [ono]
-;  (if-let [row (first (j/query dbspec
-;                               (-> (select :*)
-;                                   (from :inout)
-;                                   (where [:and [:= :ono ono] [:= :is_divide false]])
-;                                   (sql/format))))]
-;    (let [arr []]
-;      (println "### divide-new")
-;      (println "ono : " ono)
-;      (println row)
-;      (loop [sum (:amount row)
-;             cnt 0]
-;        (println "remain [" sum "]")
-;        (when (or (not= sum 0) (= cnt 0))
-;          (println "amount / bid / comment")
-;          (print "===>")
-;          (let [sep (str/split (read-line) #"/")
-;                amount (edn/read-string (nth sep 0))
-;                bid (nth sep 1)
-;                comment (nth sep 2)]
-;            (println "input : " amount bid comment)
-;            (conj arr [amount bid comment])
-;
-;            (j/with-db-connection [tx dbspec]
-;                                  (j/execute! tx
-;                                              (-> (insert-into :divide)
-;                                                  (columns :ono :amount :bid :comment :etc :base_date)
-;                                                  (values [[ono amount bid (:comment row) "etc" (:base_date row)]]) sql/format))
-;                                  (j/execute! tx
-;                                              (-> (helpers/update :inout)
-;                                                  (sset {:is_divide true})
-;                                                  (where [:= :ono ono]) (sql/format)))
-;                                  (bucket-sum bid))
-;
-;            (recur (- sum amount) (inc cnt))))))))
 
 (defn terminal-divide-new [ono]
   (if-let [row (first (j/query dbspec
@@ -379,15 +342,6 @@
 
 
 
-;(defn divide-remove [ono]
-;  (divide-info-ono ono)
-;  (j/with-db-connection [tx dbspec]
-;                        (j/execute! tx (-> (delete-from :divide)
-;                                           (where [:= :ono ono])
-;                                           (sql/format)))
-;                        (j/execute! tx (-> (helpers/update :inout)
-;                                           (sset {:is_divide false})
-;                                           (where [:= :ono ono]) (sql/format)))))
 (defn divide-remove [ono]
   (divide-info-ono ono)
   (j/with-db-connection [tx dbspec]
@@ -416,12 +370,6 @@
 
 
 
-;(defn inout-new [tid amount comment base_date]
-;  (j/execute! dbspec (-> (insert-into :inout)
-;                         (columns :amount :comment :base_date :is_divide :tid)
-;                         (values [[amount comment base_date false tid]]) sql/format))
-;  (println "added.")
-;  (inout-sum tid))
 
 (defn inout-new [tid amount comment base_date]
   (j/execute! dbspec
