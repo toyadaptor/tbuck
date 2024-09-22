@@ -27,7 +27,8 @@
        {:middleware [[auth/wrap-role-authorization [:admin]]]}
        ["/logout" {:post {:handler (fn [_]
                                      {:status  200
-                                      :cookies {"token" {:value "" :max-age 0 :path "/"}}})}}]
+                                      :cookies {"token" {:value "" :max-age 0 :path "/"}
+                                                "login" {:value "" :max-age 0 :path "/"}}})}}]
 
 
        ["/main" {:get {:parameters {}

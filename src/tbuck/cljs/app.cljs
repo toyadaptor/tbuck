@@ -5,7 +5,7 @@
             [reitit.frontend.easy :as rfe]
             [reitit.coercion.spec :as rss]
             [reagent.dom :as rdom]
-            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides s-buckets s-divide-new-ready s-login]]
+            [tbuck.cljs.state :refer [s-main s-tong-inouts s-bucket-divides s-inout-divides s-buckets s-divide-new-ready s-login set-login]]
             [tbuck.cljs.actions :as action]
             [tbuck.cljs.util :refer [today-in-yyyymmdd get-auth-cookie]]))
 
@@ -550,7 +550,10 @@
 
 (defn ^:export main
       []
-      (start))
+      (start)
+      (if (= "1" (get-auth-cookie))
+        (set-login true)
+        (set-login false)))
 
 
 

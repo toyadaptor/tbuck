@@ -21,6 +21,10 @@
          :cookies {"token" {:value     token
                             :http-only true
                             :secure    false
+                            :path      "/"}
+                   "login" {:value     "1"
+                            :http-only false
+                            :secure    false
                             :path      "/"}}})
 
       {:status 400 :body {:error-text "nop!"}})))
