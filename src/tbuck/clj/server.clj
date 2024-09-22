@@ -18,10 +18,9 @@
 (def app-router
   (ring/router
     [["/api"
-      ["/login" {:post {:body-params {:username string?
-                                      :password string?}
-                        :handler     (fn [{{:keys [username password]} :body-params}]
-                                       (api/login username password))}}]
+      ["/login" {:post {:body-params {:password string?}
+                        :handler     (fn [{{:keys [password]} :body-params}]
+                                       (api/login password))}}]
 
 
       ["/private"

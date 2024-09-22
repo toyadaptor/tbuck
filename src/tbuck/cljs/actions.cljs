@@ -76,9 +76,6 @@
 
 
 (defn create-bucket-divide [ono divides callback]
-      (js/alert ono)
-      (js/alert divides)
-
       (go (let [response (<! (http/post (str backend-url "/api/private/inout/" ono "/divide-new")
                                         {:with-credentials? true
                                          :json-params       {:divides divides}}))]

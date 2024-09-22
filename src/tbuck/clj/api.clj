@@ -9,12 +9,12 @@
                               :base_date   :base-date}))
 
 
-(defn login [username password]
+(defn login [password]
   (let [valid? (some-> auth/auth-data
-                       (get (keyword username))
+                       (get :admin)
                        (= password))]
     (if valid?
-      (let [claims {:user (keyword username)
+      (let [claims {:user :admin
                     :exp  (time/plus (time/now) (time/seconds 3600))}
             token (jwt/sign claims auth/secret {:alg :hs512})]
         {:status  200 :body {:token token}

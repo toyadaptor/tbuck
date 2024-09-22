@@ -126,7 +126,7 @@
                                [:div.field
                                 [:label.label "금액"]
                                 [:div.control
-                                 [:input.input {:type         "tel"
+                                 [:input.input {:type         "number"
                                                 :value        (:amount @input-inout-new)
                                                 :place-holder "0 이면 버켓 리밸런싱"
                                                 :on-change    #(swap! input-inout-new assoc :amount (-> % .-target .-value))}]]]
@@ -134,7 +134,7 @@
                                [:div.field
                                 [:label.label "날짜"]
                                 [:div.control
-                                 [:input.input {:type      "tel"
+                                 [:input.input {:type      "number"
                                                 :value     (:base-date @input-inout-new)
                                                 :on-change #(swap! input-inout-new assoc :base-date (-> % .-target .-value))}]]]
 
@@ -338,14 +338,14 @@
                                                           [:div.field-body
                                                            [:div.field
                                                             [:div.control
-                                                             [:input.input {:type     "number"
+                                                             [:input.input {:type     "text"
                                                                             :disabled "disabled"
                                                                             :style    {:text-align "right"}
                                                                             :value    (.toLocaleString (:amount bucket))}]]]
 
                                                            [:div.field
                                                             [:div.control
-                                                             [:input.input {:type      "tel"
+                                                             [:input.input {:type      "text"
                                                                             :value     (:val bucket)
                                                                             :style     {:text-align "right"}
                                                                             :on-change #(swap! input-divide-new-buckets assoc-in [k :val] (-> % .-target .-value))}]]]]])]]]]
@@ -410,15 +410,7 @@
                                    [:div.columns
                                     [:div.column
                                      [:div.field.is-horizontal
-                                      [:div.field-label.is-normal
-                                       [:label.label "username"]]
-                                      [:div.field-body
-                                       [:div.field
-                                        [:div.control
-                                         [:input.input
-                                          {:on-change #(swap! input-login assoc :username (-> % .-target .-value))}]]]]]
-                                     [:div.field.is-horizontal
-                                      [:div.field-label.is-normal
+                                      #_[:div.field-label.is-normal
                                        [:label.label "password"]]
                                       [:div.field-body
                                        [:div.field
